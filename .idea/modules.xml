@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ZoomLayout.iml" filepath="$PROJECT_DIR$/ZoomLayout.iml" />
       <module fileurl="file://$PROJECT_DIR$/library/library.iml" filepath="$PROJECT_DIR$/library/library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../markhor/library/markhor.iml" filepath="$PROJECT_DIR$/../markhor/library/markhor.iml" />
       <module fileurl="file://$PROJECT_DIR$/sample/sample.iml" filepath="$PROJECT_DIR$/sample/sample.iml" />
+      <module fileurl="file://$PROJECT_DIR$/zoomlayout.iml" filepath="$PROJECT_DIR$/zoomlayout.iml" />
     </modules>
   </component>
 </project>

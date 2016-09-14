@@ -20,6 +20,7 @@ import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.Scroller;
 
+import com.shopgun.android.utils.CompatUtils;
 import com.shopgun.android.utils.NumberUtils;
 import com.shopgun.android.utils.UnitUtils;
 import com.shopgun.android.utils.log.L;
