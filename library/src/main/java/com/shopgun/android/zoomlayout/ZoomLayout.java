@@ -1,4 +1,4 @@
-package com.shopgun.android.zoompanviewgroup;
+package com.shopgun.android.zoomlayout;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -311,7 +311,7 @@ public class ZoomLayout extends FrameLayout {
                 } else {
 
                     // The ViewPort is inside the DrawRect - no problem
-                    animatedZoomRunnable.scaleIfNeeded(mScaleFactor, newScale, getWidth()/2, getHeight()/2);
+//                    animatedZoomRunnable.scaleIfNeeded(mScaleFactor, newScale, getWidth()/2, getHeight()/2);
 
                 }
 
@@ -386,30 +386,32 @@ public class ZoomLayout extends FrameLayout {
 
         private float mFocusX;
         private float mFocusY;
+        private float mCurrentX;
+        private float mCurrentY;
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
-            return super.onScaleBegin(detector);
+            mCurrentX = mTranslateArray[0] = detector.getFocusX();
+            mCurrentY = mTranslateArray[1] = detector.getFocusY();
+            screenPointsToScaledPoints(mTranslateArray);
+            mFocusX = mTranslateArray[0];
+            mFocusY = mTranslateArray[1];
+            return true;
         }
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             float scale = mScaleFactor * detector.getScaleFactor();
-            // TODO Think we need some work on the focus points - odd behaviour when scale < 1
-            float focusX = detector.getFocusX();
-            float focusY = detector.getFocusY();
-            if (scale>1) {
-                focusX = -focusX;
-                focusY = -focusY;
-            }
-            L.d(TAG, String.format("scale:%S, focusX:%s, focusY:%s", scale, focusX, focusY));
-            internalScale(scale, focusX, focusY);
+            moveBy(mCurrentX - detector.getFocusX(), mCurrentY - detector.getFocusY());
+            internalScale(scale, mFocusX, mFocusY);
+            mCurrentX = detector.getFocusX();
+            mCurrentY = detector.getFocusY();
             return true;
         }
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
-            super.onScaleEnd(detector);
+
         }
     }
 

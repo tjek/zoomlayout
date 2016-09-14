@@ -1,4 +1,4 @@
-package com.shopgun.android.zoompanviewgroup;
+package com.shopgun.android.zoomlayout;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

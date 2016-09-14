@@ -1,4 +1,4 @@
-package com.shopgun.android.zoompanviewgroup;
+package com.shopgun.android.zoomlayout;
 
 import org.junit.Test;
 

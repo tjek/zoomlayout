@@ -1,4 +1,4 @@
-package com.shopgun.android.zoompanviewgroup;
+package com.shopgun.android.zoomlayout;
 
 import android.annotation.TargetApi;
 import android.os.Build;
