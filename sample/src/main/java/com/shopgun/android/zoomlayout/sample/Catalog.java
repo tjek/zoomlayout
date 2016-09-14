@@ -1,4 +1,4 @@
-package com.shopgun.android.zoompanviewgroup.sample;
+package com.shopgun.android.zoomlayout.sample;
 
 import java.util.Locale;
 

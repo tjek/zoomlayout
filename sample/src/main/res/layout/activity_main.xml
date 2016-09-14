@@ -11,7 +11,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:orientation="vertical"
     android:background="@color/colorPrimary"
-    tools:context="com.shopgun.android.zoompanviewgroup.sample.MainActivity">
+    tools:context="com.shopgun.android.zoomlayout.sample.MainActivity">
 
     <TextView
         android:id="@+id/info"
