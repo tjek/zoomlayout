@@ -30,6 +30,8 @@ public class ZoomLayout extends FrameLayout {
 
     public static final String TAG = ZoomLayout.class.getSimpleName();
 
+    public boolean DEBUG_DRAW = false;
+
     private float mMinScale = 1.0f;
     private float mMaxScale = 4.0f;
 
@@ -152,10 +154,12 @@ public class ZoomLayout extends FrameLayout {
     }
 
     protected void debugDraw(Canvas canvas) {
-        ensureDebugOptions();
-        canvas.drawCircle(-mPosX, -mPosY, mDebugRadius, mDebugPaintXY);
-        canvas.drawCircle(mPosX, mPosY, mDebugRadius, mDebugPaintXY);
-        canvas.drawCircle(mFocusX, mFocusY, mDebugRadius, mDebugPaintFocus);
+        if (DEBUG_DRAW) {
+            ensureDebugOptions();
+            canvas.drawCircle(-mPosX, -mPosY, mDebugRadius, mDebugPaintXY);
+            canvas.drawCircle(mPosX, mPosY, mDebugRadius, mDebugPaintXY);
+            canvas.drawCircle(mFocusX, mFocusY, mDebugRadius, mDebugPaintFocus);
+        }
     }
 
     @Override

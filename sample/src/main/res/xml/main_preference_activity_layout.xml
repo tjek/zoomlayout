@@ -21,27 +21,48 @@
         android:title="ZoomLayout">
 
         <Preference
-            android:key="pref_main_singleview"
-            android:title="SingleView Activity">
+            android:key="pref_main_singleimageview"
+            android:title="Single ImageView">
             <intent
                 android:targetPackage="com.shopgun.android.zoomlayout.sample"
                 android:targetClass="com.shopgun.android.zoomlayout.sample.SingleViewActivity"/>
         </Preference>
 
         <Preference
-            android:key="pref_main_multiview"
-            android:title="MultiView Activity">
+            android:key="pref_main_doubleimageview"
+            android:title="Double ImageView">
             <intent
                 android:targetPackage="com.shopgun.android.zoomlayout.sample"
-                android:targetClass="com.shopgun.android.zoomlayout.sample.MultiViewActivity"/>
+                android:targetClass="com.shopgun.android.zoomlayout.sample.DoubleImageViewActivity"/>
         </Preference>
 
         <Preference
             android:key="pref_main_viewpager"
-            android:title="ViewPager Activity">
+            android:title="ViewPager">
             <intent
                 android:targetPackage="com.shopgun.android.zoomlayout.sample"
                 android:targetClass="com.shopgun.android.zoomlayout.sample.ViewPagerActivity"/>
+        </Preference>
+
+        <Preference
+            android:key="pref_main_multipleview"
+            android:title="Multiple Views">
+            <intent
+                android:targetPackage="com.shopgun.android.zoomlayout.sample"
+                android:targetClass="com.shopgun.android.zoomlayout.sample.MultipleViewActivity"/>
+        </Preference>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Issues">
+
+        <Preference
+            android:key="pref_main_multipleview"
+            android:title="Child View Input ">
+            <intent
+                android:targetPackage="com.shopgun.android.zoomlayout.sample"
+                android:targetClass="com.shopgun.android.zoomlayout.sample.ChildViewInputActivity"/>
         </Preference>
 
     </PreferenceCategory>

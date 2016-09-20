@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/colorPrimary"
-    tools:context=".MultiViewActivity">
+    tools:context=".DoubleImageViewActivity">
 
     <include layout="@layout/info"/>
     <include layout="@layout/imageview_double" />

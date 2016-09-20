@@ -18,10 +18,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".SingleViewActivity"/>
-        <activity android:name=".MultiViewActivity"/>
+        <activity android:name=".SingleImageViewActivity"/>
+        <activity android:name=".DoubleImageViewActivity"/>
         <activity android:name=".ViewPagerActivity"/>
-
+        <activity android:name=".MultipleViewActivity"/>
+        <activity android:name=".ChildViewInputActivity"/>
     </application>
 
 </manifest>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:background="@color/colorPrimary"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <include layout="@layout/info"/>
+
+    <com.shopgun.android.zoomlayout.ZoomLayout
+        android:id="@+id/zoomLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:text="ChildViews doesn't yet receive input"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:text="No EditTexts"
+                android:ems="10"
+                android:id="@+id/editText"/>
+
+            <android.support.v7.widget.SwitchCompat
+                android:text="No switches"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/switch1"/>
+
+            <SeekBar
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="10"
+                android:progress="3"
+                android:id="@+id/seekBar2"/>
+        </LinearLayout>
+
+    </com.shopgun.android.zoomlayout.ZoomLayout>
+
+</LinearLayout>
