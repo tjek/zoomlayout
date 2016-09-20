@@ -96,32 +96,35 @@ public class ZoomLayout extends FrameLayout {
         mGestureDetector = new GestureDetector(context, new GestureListener());
         mTranslateMatrix.setTranslate(0, 0);
         mScaleMatrix.setScale(1, 1);
-        addOnLayoutChangeListener(new OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
-                    L.d(TAG, "onLayoutChange");
-                }
-            }
-        });
+//        addOnLayoutChangeListener(new OnLayoutChangeListener() {
+//            @Override
+//            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//                if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
+////                    L.d(TAG, "onLayoutChange");
+//                }
+//            }
+//        });
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int w = MeasureSpec.getSize(widthMeasureSpec) -
-                ViewCompat.getPaddingStart(this) - ViewCompat.getPaddingEnd(this);
-        int h = MeasureSpec.getSize(heightMeasureSpec) -
-                getPaddingTop() - getPaddingBottom();
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+//        int w = MeasureSpec.getSize(widthMeasureSpec) -
+//                ViewCompat.getPaddingStart(this) - ViewCompat.getPaddingEnd(this);
+//        int h = MeasureSpec.getSize(heightMeasureSpec) -
+//                getPaddingTop() - getPaddingBottom();
+//
+//        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(w, MeasureSpec.AT_MOST);
+//        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(h, MeasureSpec.AT_MOST);
+//
+//        measureChildren(childWidthMeasureSpec, childHeightMeasureSpec);
+//        final int mCount = getChildCount();
+//        for (int i = 0; i < mCount; i++) {
+//            final View child = getChildAt(i);
+//            child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+//        }
+//        setMeasuredDimension(resolveSize(w, widthMeasureSpec), resolveSize(h, heightMeasureSpec));
 
-        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY);
-        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY);
-
-        final int count = getChildCount();
-        for (int i = 0; i < count; i++) {
-            final View child = getChildAt(i);
-            child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
-        }
-        setMeasuredDimension(resolveSize(w, widthMeasureSpec), resolveSize(h, heightMeasureSpec));
     }
 
     @Override
@@ -129,15 +132,24 @@ public class ZoomLayout extends FrameLayout {
         super.onLayout(changed, left, top, right, bottom);
     }
 
-    Paint mPaintXY;
-    Paint mPaintFocus;
-    private void ensurePaint() {
-        if (mPaintXY == null) {
-            mPaintXY = new Paint();
-            mPaintXY.setColor(Color.YELLOW);
-            mPaintFocus = new Paint();
-            mPaintFocus.setColor(Color.MAGENTA);
+    Paint mDebugPaintXY;
+    Paint mDebugPaintFocus;
+    int mDebugRadius = 0;
+    private void ensureDebugOptions() {
+        if (mDebugPaintXY == null) {
+            mDebugPaintXY = new Paint();
+            mDebugPaintXY.setColor(Color.BLUE);
+            mDebugPaintFocus = new Paint();
+            mDebugPaintFocus.setColor(Color.MAGENTA);
+            mDebugRadius = UnitUtils.dpToPx(2, getContext());
         }
+    }
+
+    protected void debugDraw(Canvas canvas) {
+        ensureDebugOptions();
+        canvas.drawCircle(-mPosX, -mPosY, mDebugRadius, mDebugPaintXY);
+        canvas.drawCircle(mPosX, mPosY, mDebugRadius, mDebugPaintXY);
+        canvas.drawCircle(mFocusX, mFocusY, mDebugRadius, mDebugPaintFocus);
     }
 
     @Override
@@ -145,25 +157,24 @@ public class ZoomLayout extends FrameLayout {
         canvas.save();
         canvas.translate(-mPosX, -mPosY);
         canvas.scale(mScaleFactor, mScaleFactor, mFocusX, mFocusY);
+//        canvas.setMatrix(getDrawMatrix());
         super.dispatchDraw(canvas);
-        ensurePaint();
-        canvas.drawCircle(-mPosX, -mPosY, UnitUtils.dpToPx(2, getContext()), mPaintXY);
-        canvas.drawCircle(mFocusX, mFocusY, UnitUtils.dpToPx(2, getContext()), mPaintFocus);
+        debugDraw(canvas);
         canvas.restore();
+    }
+
+    Matrix mDrawMatrix = new Matrix();
+    private Matrix getDrawMatrix() {
+        mDrawMatrix.reset();
+        mDrawMatrix.set(mScaleMatrix);
+        mDrawMatrix.postConcat(mTranslateMatrix);
+        return mDrawMatrix;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        ensurePaint();
-        canvas.drawCircle(-mPosX, -mPosY, UnitUtils.dpToPx(2, getContext()), mPaintXY);
-        canvas.drawCircle(mFocusX, mFocusY, UnitUtils.dpToPx(2, getContext()), mPaintFocus);
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        screenPointsToScaledPoints(ev);
-        return super.dispatchTouchEvent(ev);
+        debugDraw(canvas);
     }
 
     /**
@@ -233,6 +244,17 @@ public class ZoomLayout extends FrameLayout {
         mTranslateMatrixInverse.mapPoints(a);
         mScaleMatrixInverse.mapPoints(a);
         return a;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        screenPointsToScaledPoints(ev);
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return true;
     }
 
     @Override
