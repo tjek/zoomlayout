@@ -5,15 +5,14 @@ android {
     buildToolsVersion "24.0.1"
 
     defaultConfig {
-        applicationId "com.shopgun.android.zoompanviewgroup.sample"
-        minSdkVersion 15
+        applicationId "com.shopgun.android.zoomlayout.sample"
+        minSdkVersion 10
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
     }
+
     buildTypes {
         release {
             minifyEnabled false

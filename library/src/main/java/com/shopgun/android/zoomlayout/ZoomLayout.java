@@ -18,7 +18,6 @@ import android.view.ViewParent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
-import android.widget.Scroller;
 
 import com.shopgun.android.utils.CompatUtils;
 import com.shopgun.android.utils.NumberUtils;
@@ -623,15 +622,16 @@ public class ZoomLayout extends FrameLayout {
             t = Math.min(1f, t);
             return mAnimationInterpolator.getInterpolation(t);
         }
+
     }
 
     private class FlingRunnable implements Runnable {
 
-        private final Scroller mScroller;
+        private final ScrollerCompat mScroller;
         private int mCurrentX, mCurrentY;
 
         public FlingRunnable(Context context) {
-            mScroller = new Scroller(getContext());
+            mScroller = ScrollerCompat.getScroller(context);
         }
 
         public void cancelFling() {
@@ -668,7 +668,7 @@ public class ZoomLayout extends FrameLayout {
 
             // If we actually can move, fling the scroller
             if (startX != maxX || startY != maxY) {
-                mScroller.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY);
+                mScroller.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY, 0, 0);
             }
         }
 
