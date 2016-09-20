@@ -25,7 +25,7 @@
             android:title="Single ImageView">
             <intent
                 android:targetPackage="com.shopgun.android.zoomlayout.sample"
-                android:targetClass="com.shopgun.android.zoomlayout.sample.SingleViewActivity"/>
+                android:targetClass="com.shopgun.android.zoomlayout.sample.SingleImageViewActivity"/>
         </Preference>
 
         <Preference
