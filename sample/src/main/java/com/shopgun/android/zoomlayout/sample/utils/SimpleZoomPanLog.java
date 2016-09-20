@@ -3,7 +3,6 @@ package com.shopgun.android.zoomlayout.sample.utils;
 import android.graphics.RectF;
 import android.widget.TextView;
 
-import com.shopgun.android.utils.log.L;
 import com.shopgun.android.zoomlayout.ZoomLayout;
 
 import java.util.Locale;
@@ -62,7 +61,7 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener, ZoomLayout.O
         if (mTextView != null) {
             mTextView.setText(text);
         }
-        L.d(mTag, text);
+//        L.d(mTag, text);
     }
 
     public static final String RECT_FORMAT = "[ %.0f, %.0f, %.0f, %.0f ]";

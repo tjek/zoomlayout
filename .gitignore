@@ -9,6 +9,7 @@
 # generated files
 bin/
 gen/
+captures/
 
 # Ignore gradle files
 .gradle/
