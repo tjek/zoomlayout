@@ -7,6 +7,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.shopgun.android.zoomlayout.ZoomLayout;
+import com.shopgun.android.zoomlayout.sample.utils.Catalog;
+import com.shopgun.android.zoomlayout.sample.utils.SimpleZoomPanLog;
 import com.squareup.picasso.Picasso;
 
 public class MultiViewActivity extends AppCompatActivity {

@@ -1,4 +1,4 @@
-package com.shopgun.android.zoomlayout.sample;
+package com.shopgun.android.zoomlayout.sample.utils;
 
 import android.content.Context;
 import android.support.v4.view.ViewPager;

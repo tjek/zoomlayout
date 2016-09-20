@@ -1,4 +1,4 @@
-package com.shopgun.android.zoomlayout.sample;
+package com.shopgun.android.zoomlayout.sample.utils;
 
 import android.graphics.RectF;
 import android.widget.TextView;

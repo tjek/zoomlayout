@@ -9,7 +9,6 @@ public class MainActivity extends PreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.main_preference_activity_layout);
-
     }
 
 }

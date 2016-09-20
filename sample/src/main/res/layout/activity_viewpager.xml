@@ -5,11 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/colorPrimary"
     tools:context=".ViewPagerActivity">
 
-<include layout="@layout/info"/>
-
-    <com.shopgun.android.zoomlayout.sample.HackedViewPager
+    <include layout="@layout/info"/>
+    <com.shopgun.android.zoomlayout.sample.utils.HackedViewPager
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

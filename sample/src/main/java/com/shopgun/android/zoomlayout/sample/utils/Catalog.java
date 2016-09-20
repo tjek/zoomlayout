@@ -1,4 +1,4 @@
-package com.shopgun.android.zoomlayout.sample;
+package com.shopgun.android.zoomlayout.sample.utils;
 
 import java.util.Locale;
 
@@ -18,7 +18,7 @@ public class Catalog {
 
     public enum Size {
 
-        THUMB("thumb"), VIEW("thumb"), ZOOM("thumb");
+        THUMB("thumb"), VIEW("view"), ZOOM("zoom");
 
         final String mSize;
 

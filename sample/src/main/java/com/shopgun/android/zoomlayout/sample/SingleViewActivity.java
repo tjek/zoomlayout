@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.shopgun.android.zoomlayout.ZoomLayout;
+import com.shopgun.android.zoomlayout.sample.utils.SimpleZoomPanLog;
 
 public class SingleViewActivity extends AppCompatActivity {
 
