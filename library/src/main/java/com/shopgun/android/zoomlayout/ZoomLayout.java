@@ -298,8 +298,8 @@ public class ZoomLayout extends FrameLayout {
                         (viewRect.height() > drawRect.height() &&
                                 viewRect.width() > drawRect.width())) {
 
-                    animatedZoomRunnable.scale(mScaleFactor, newScale, (float)getWidth()/2, (float)getHeight()/2);
-                    animatedZoomRunnable.translate(mPosX, mPosY, 0, 0);
+                    animatedZoomRunnable.scaleIfNeeded(mScaleFactor, newScale, (float)getWidth()/2, (float)getHeight()/2);
+                    animatedZoomRunnable.translateIfNeeded(mPosX, mPosY, 0, 0);
 
                 } else if (!drawRect.contains(viewRect)) {
 
@@ -313,7 +313,7 @@ public class ZoomLayout extends FrameLayout {
                     }
 
                     // TODO handle this case nicely - not just re-center
-                    animatedZoomRunnable.translate(mPosX, mPosY, 0, 0);
+                    animatedZoomRunnable.translateIfNeeded(mPosX, mPosY, 0, 0);
 
                     if (viewRect.left < drawRect.left) {
                         L.d(TAG, "left");
@@ -340,7 +340,7 @@ public class ZoomLayout extends FrameLayout {
                 } else {
 
                     // The ViewPort is inside the DrawRect - no problem
-                    animatedZoomRunnable.scale(mScaleFactor, newScale, mFocusX, mFocusY);
+                    animatedZoomRunnable.scaleIfNeeded(mScaleFactor, newScale, mFocusX, mFocusY);
 
                 }
 
@@ -569,6 +569,9 @@ public class ZoomLayout extends FrameLayout {
     }
 
     private void internalScale(float scale, float focusX, float focusY) {
+        if (NumberUtils.isEqual(scale, 0f)) {
+            L.d(TAG, "no no no");
+        }
         mScaleFactor = scale;
         mFocusX = focusX;
         mFocusY = focusY;
@@ -620,6 +623,8 @@ public class ZoomLayout extends FrameLayout {
 
     private class AnimatedZoomRunnable implements Runnable {
 
+        boolean mPerformScale = false;
+        boolean mPerformTranslate = false;
         boolean mCancel = false;
 
         private long mStartTime;
@@ -630,69 +635,86 @@ public class ZoomLayout extends FrameLayout {
             mStartTime = System.currentTimeMillis();
         }
 
+        public AnimatedZoomRunnable scaleIfNeeded(float currentZoom, float targetZoom, float focalX, float focalY) {
+            if (performScale(currentZoom, targetZoom, focalX, focalY)) {
+                scale(currentZoom, targetZoom, focalX, focalY);
+            }
+            return this;
+        }
+
+        boolean performScale(float currentZoom, float targetZoom, float focalX, float focalY) {
+            return !NumberUtils.isEqual(currentZoom, targetZoom) ||
+                    !NumberUtils.isEqual(focalX, ZoomLayout.this.mFocusX) ||
+                    !NumberUtils.isEqual(focalY, ZoomLayout.this.mFocusY);
+        }
+
         public AnimatedZoomRunnable scale(float currentZoom, float targetZoom, float focalX, float focalY) {
+            mPerformScale = true;
             mFocalX = focalX;
             mFocalY = focalY;
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
-            if (scale()) {
-                L.d(TAG, String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
-                mZoomDispatcher.onZoomBegin(ZoomLayout.this, mScaleFactor, getViewPortRect());
+            L.d(TAG, String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
+            mZoomDispatcher.onZoomBegin(ZoomLayout.this, mScaleFactor, getViewPortRect());
+            return this;
+        }
+
+        public boolean scale() {
+            return mPerformScale;
+        }
+
+        public AnimatedZoomRunnable translateIfNeeded(float currentX, float currentY, float targetX, float targetY) {
+            if (performTranslate(currentX, currentY, targetX, targetY)) {
+                translate(currentX, currentY, targetX, targetY);
             }
             return this;
         }
 
+        public boolean performTranslate(float currentX, float currentY, float targetX, float targetY) {
+            return !NumberUtils.isEqual(currentX, targetX) ||
+                    !NumberUtils.isEqual(currentY, targetY);
+        }
+
         public AnimatedZoomRunnable translate(float currentX, float currentY, float targetX, float targetY) {
+            mPerformTranslate = true;
             mXStart = currentX;
             mYStart = currentY;
             mXEnd = targetX;
             mYEnd = targetY;
-            if (translate()) {
-                L.d(TAG, String.format("AnimatedZoomRunnable.Translate: x[%s -> %s], y[%s -> %s]", mXStart, mXEnd, mYStart, mYEnd));
-                mPanDispatcher.onPanBegin(ZoomLayout.this, getViewPortRect());
-            }
+            L.d(TAG, String.format("AnimatedZoomRunnable.Translate: x[%s -> %s], y[%s -> %s]", mXStart, mXEnd, mYStart, mYEnd));
+            mPanDispatcher.onPanBegin(ZoomLayout.this, getViewPortRect());
             return this;
         }
 
+        public boolean translate() {
+            return mPerformTranslate;
+        }
+
         public void cancel() {
-            if (scale()) {
+            if (mPerformScale) {
                 mZoomDispatcher.onZoomEnd(ZoomLayout.this, mScaleFactor, getViewPortRect());
             }
-            if (translate()) {
+            if (mPerformTranslate) {
                 mPanDispatcher.onPanEnd(ZoomLayout.this, getViewPortRect());
             }
             mCancel = true;
         }
 
-        public boolean scale() {
-            return !NumberUtils.isEqual(mZoomStart, mZoomEnd) ||
-                    !NumberUtils.isEqual(mFocalX, ZoomLayout.this.mFocusX) ||
-                    !NumberUtils.isEqual(mFocalY, ZoomLayout.this.mFocusY);
-        }
-
-        public boolean translate() {
-            return !NumberUtils.isEqual(mXStart, mXEnd) ||
-                    !NumberUtils.isEqual(mYStart, mYEnd);
-        }
-
         @Override
         public void run() {
 
-            boolean scale = scale();
-            boolean translate = translate();
-
-            if (mCancel || (!scale && !translate)) {
+            if (mCancel || (!mPerformScale && !mPerformTranslate)) {
                 return;
             }
 
             float t = interpolate();
 
-            if (scale) {
+            if (mPerformScale) {
                 float newScale = mZoomStart + t * (mZoomEnd - mZoomStart);
                 internalScale(newScale, mFocalX, mFocalY);
             }
 
-            if (translate) {
+            if (mPerformTranslate) {
                 float x = mXStart + t * (mXEnd - mXStart);
                 float y = mYStart + t * (mYEnd - mYStart);
                 internalMove(x, y);
@@ -702,10 +724,10 @@ public class ZoomLayout extends FrameLayout {
             if (t < 1f) {
                 ViewCompat.postOnAnimation(ZoomLayout.this, this);
             } else {
-                if (scale) {
+                if (mPerformScale) {
                     mZoomDispatcher.onZoomEnd(ZoomLayout.this, mScaleFactor, getViewPortRect());
                 }
-                if (translate) {
+                if (mPerformTranslate) {
                     mPanDispatcher.onPanEnd(ZoomLayout.this, getViewPortRect());
                 }
             }
