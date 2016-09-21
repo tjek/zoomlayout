@@ -35,7 +35,6 @@ public class ZoomLayout extends FrameLayout {
     private float mMinScale = 1.0f;
     private float mMaxScale = 4.0f;
 
-    private float mScaleFactor = 1;
     private ScaleGestureDetector mScaleDetector;
     private Matrix mScaleMatrix = new Matrix();
     private Matrix mScaleMatrixInverse = new Matrix();
@@ -132,19 +131,11 @@ public class ZoomLayout extends FrameLayout {
     protected void dispatchDraw(Canvas canvas) {
         canvas.save();
         canvas.translate(-mPosX, -mPosY);
-        canvas.scale(mScaleFactor, mScaleFactor, mFocusX, mFocusY);
-//        canvas.setMatrix(getDrawMatrix());
+        float scale = getScale();
+        canvas.scale(scale, scale, mFocusX, mFocusY);
         super.dispatchDraw(canvas);
         debugDraw(canvas);
         canvas.restore();
-    }
-
-    Matrix mDrawMatrix = new Matrix();
-    private Matrix getDrawMatrix() {
-        mDrawMatrix.reset();
-        mDrawMatrix.set(mScaleMatrix);
-        mDrawMatrix.postConcat(mTranslateMatrix);
-        return mDrawMatrix;
     }
 
     @Override
@@ -161,8 +152,9 @@ public class ZoomLayout extends FrameLayout {
     @Override
     public ViewParent invalidateChildInParent(int[] location, Rect dirty) {
         scaledPointsToScreenPoints(dirty);
-        location[0] *= mScaleFactor;
-        location[1] *= mScaleFactor;
+        float scale = getScale();
+        location[0] *= scale;
+        location[1] *= scale;
         return super.invalidateChildInParent(location, dirty);
     }
 
@@ -254,8 +246,9 @@ public class ZoomLayout extends FrameLayout {
                 RectF drawRect = getDrawingRect();
                 mCurrentAnimatedZoomRunnable = new AnimatedZoomRunnable();
 
-                float newScale = mScaleFactor < mMinScale ? mMinScale : (mMaxScale < mScaleFactor ? mMaxScale : mScaleFactor);
-                boolean needScale = !NumberUtils.isEqual(newScale, mScaleFactor);
+                float currentScale = getScale();
+                float newScale = currentScale < mMinScale ? mMinScale : (mMaxScale < currentScale ? mMaxScale : currentScale);
+                boolean needScale = !NumberUtils.isEqual(newScale, currentScale);
 
                 // Find current bounds before applying scale to do the rest of the calculations
 
@@ -263,7 +256,7 @@ public class ZoomLayout extends FrameLayout {
                         (viewRect.height() > drawRect.height() &&
                                 viewRect.width() > drawRect.width())) {
 
-                    mCurrentAnimatedZoomRunnable.scaleIfNeeded(mScaleFactor, newScale, (float)getWidth()/2, (float)getHeight()/2);
+                    mCurrentAnimatedZoomRunnable.scaleIfNeeded(currentScale, newScale, (float)getWidth()/2, (float)getHeight()/2);
                     mCurrentAnimatedZoomRunnable.translateIfNeeded(mPosX, mPosY, 0, 0);
 
                 } else if (!drawRect.contains(viewRect)) {
@@ -295,14 +288,14 @@ public class ZoomLayout extends FrameLayout {
 
                     if (needScale) {
                         // reset the scale/position
-                        mScaleMatrix.setScale(mScaleFactor, mScaleFactor);
+                        mScaleMatrix.setScale(currentScale, currentScale);
                         matrixUpdated();
                     }
 
                 } else {
 
                     // The ViewPort is inside the DrawRect - no problem
-                    mCurrentAnimatedZoomRunnable.scaleIfNeeded(mScaleFactor, newScale, mFocusX, mFocusY);
+                    mCurrentAnimatedZoomRunnable.scaleIfNeeded(currentScale, newScale, mFocusX, mFocusY);
 
                 }
 
@@ -354,8 +347,8 @@ public class ZoomLayout extends FrameLayout {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             if (getDrawingRect().contains(getViewPortRect())) {
-                float newScale = mScaleFactor < mMinScale ? mMinScale : (mMaxScale < mScaleFactor ? mMaxScale : mScaleFactor);
-                if (NumberUtils.isEqual(newScale, mScaleFactor)) {
+                float newScale = getScale() < mMinScale ? mMinScale : (mMaxScale < getScale() ? mMaxScale : getScale());
+                if (NumberUtils.isEqual(newScale, getScale())) {
                     // only fling if no scale is needed - scale will happen on ACTION_UP
                     mCurrentFlingRunnable = new FlingRunnable(getContext());
                     mCurrentFlingRunnable.fling((int) velocityX, (int) velocityY);
@@ -402,8 +395,8 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            float scale = mScaleFactor * detector.getScaleFactor();
-            moveBy(mCurrentX - detector.getFocusX(), mCurrentY - detector.getFocusY());
+            float scale = getScale() * detector.getScaleFactor();
+//            moveBy(mCurrentX - detector.getFocusX(), mCurrentY - detector.getFocusY());
             internalScale(scale, mFocusX, mFocusY);
             mCurrentX = detector.getFocusX();
             mCurrentY = detector.getFocusY();
@@ -457,7 +450,7 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public float getScale() {
-        return mScaleFactor;
+        return getMatrixValue(mScaleMatrix, Matrix.MSCALE_X);
     }
 
     public void setScale(float scale) {
@@ -501,7 +494,7 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public boolean isScaled() {
-        return !NumberUtils.isEqual(mScaleFactor, 1.0f, 0.05f);
+        return !NumberUtils.isEqual(getScale(), 1.0f, 0.05f);
     }
 
     public void setScale(float scale, float focusX, float focusY, boolean animate) {
@@ -510,7 +503,7 @@ public class ZoomLayout extends FrameLayout {
         }
         if (animate) {
             mCurrentAnimatedZoomRunnable = new AnimatedZoomRunnable();
-            mCurrentAnimatedZoomRunnable.scale(mScaleFactor, scale, focusX, focusY);
+            mCurrentAnimatedZoomRunnable.scale(getScale(), scale, focusX, focusY);
             ViewCompat.postOnAnimation(ZoomLayout.this, mCurrentAnimatedZoomRunnable);
         } else {
             internalScale(scale, focusX, focusY);
@@ -518,10 +511,9 @@ public class ZoomLayout extends FrameLayout {
     }
 
     private void internalScale(float scale, float focusX, float focusY) {
-        mScaleFactor = scale;
         mFocusX = focusX;
         mFocusY = focusY;
-        mScaleMatrix.setScale(mScaleFactor, mScaleFactor, mFocusX, mFocusY);
+        mScaleMatrix.setScale(scale, scale, mFocusX, mFocusY);
         matrixUpdated();
         mZoomDispatcher.onZoom(ZoomLayout.this, scale);
         invalidate();
@@ -583,6 +575,12 @@ public class ZoomLayout extends FrameLayout {
         printMatrixInfo("MatrixUpdate");
     }
 
+
+    private float[] mMatrixValues = new float[9];
+    private float getMatrixValue(Matrix matrix, int value) {
+        matrix.getValues(mMatrixValues);
+        return mMatrixValues[value];
+    }
 
     private class AnimatedZoomRunnable implements Runnable {
 
