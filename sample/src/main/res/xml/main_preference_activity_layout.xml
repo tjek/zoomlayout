@@ -45,6 +45,14 @@
         </Preference>
 
         <Preference
+            android:key="pref_main_textview"
+            android:title="TextView">
+            <intent
+                android:targetPackage="com.shopgun.android.zoomlayout.sample"
+                android:targetClass="com.shopgun.android.zoomlayout.sample.TextViewActivity"/>
+        </Preference>
+
+        <Preference
             android:key="pref_main_multipleview"
             android:title="Multiple Views">
             <intent

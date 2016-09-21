@@ -22,32 +22,32 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener, ZoomLayout.O
     }
 
     @Override
-    public void onPanBegin(ZoomLayout view, RectF viewPort) {
+    public void onPanBegin(ZoomLayout view) {
         log("onPanBegin", view);
     }
 
     @Override
-    public void onPan(ZoomLayout view, RectF viewPort) {
+    public void onPan(ZoomLayout view) {
         log("onPan", view);
     }
 
     @Override
-    public void onPanEnd(ZoomLayout view, RectF viewPort) {
+    public void onPanEnd(ZoomLayout view) {
         log("onPanEnd", view);
     }
 
     @Override
-    public void onZoomBegin(ZoomLayout view, float scale, RectF viewPort) {
+    public void onZoomBegin(ZoomLayout view, float scale) {
         log("onZoomBegin", view);
     }
 
     @Override
-    public void onZoom(ZoomLayout view, float scale, RectF viewPort) {
+    public void onZoom(ZoomLayout view, float scale) {
         log("onZoom", view);
     }
 
     @Override
-    public void onZoomEnd(ZoomLayout view, float scale, RectF viewPort) {
+    public void onZoomEnd(ZoomLayout view, float scale) {
         log("onZoomEnd", view);
     }
 

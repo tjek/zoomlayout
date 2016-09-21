@@ -23,6 +23,7 @@
         <activity android:name=".ViewPagerActivity"/>
         <activity android:name=".MultipleViewActivity"/>
         <activity android:name=".ChildViewInputActivity"/>
+        <activity android:name=".TextViewActivity"/>
     </application>
 
 </manifest>
