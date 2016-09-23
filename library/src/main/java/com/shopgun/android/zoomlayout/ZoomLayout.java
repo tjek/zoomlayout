@@ -51,7 +51,7 @@ public class ZoomLayout extends FrameLayout {
     // for set scale
     private boolean mAllowOverScale = true;
 
-    RectF mDrawingRect = new RectF();
+    RectF mDrawRect = new RectF();
     RectF mViewPortRect = new RectF();
 
     private FlingRunnable mFlingRunnable;
@@ -226,11 +226,14 @@ public class ZoomLayout extends FrameLayout {
     public boolean onTouchEvent(MotionEvent ev) {
         scaledPointsToScreenPoints(ev);
 
+        final int action = ev.getAction() & MotionEvent.ACTION_MASK;
+        if (action == MotionEvent.ACTION_DOWN) {
+            L.d(TAG, "############################# NEW DOWN EVENT ###############################");
+        }
         boolean handled = mScaleDetector.onTouchEvent(ev);
         handled = mGestureDetector.onTouchEvent(ev) || handled;
 
-        final int action = ev.getAction();
-        switch (action & MotionEvent.ACTION_MASK) {
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
                 requestDisallowInterceptTouchEvent(true);
                 cancelFling();
@@ -240,11 +243,10 @@ public class ZoomLayout extends FrameLayout {
             case MotionEvent.ACTION_UP: {
 
                 RectF viewRect = getViewPortRect();
-                RectF drawRect = getDrawingRect();
+                RectF drawRect = getDrawRect();
                 mAnimatedZoomRunnable = new AnimatedZoomRunnable();
 
-                float currentScale = getScale();
-                float newScale = currentScale < mMinScale ? mMinScale : (mMaxScale < currentScale ? mMaxScale : currentScale);
+                float newScale = NumberUtils.clamp(mMinScale, getScale(), mMaxScale);
 
                 // Find current bounds before applying scale to do the rest of the calculations
 
@@ -252,15 +254,23 @@ public class ZoomLayout extends FrameLayout {
                         (viewRect.height() > drawRect.height() &&
                                 viewRect.width() > drawRect.width())) {
 
-                    mAnimatedZoomRunnable.scaleIfNeeded(currentScale, newScale, (float)getWidth()/2, (float)getHeight()/2);
+                    L.d(TAG, "MotionEvent.ACTION_UP - ViewRect can contain DrawRect");
+
+                    // The ViewRect does (or can) contain DrawRect
+                    // We need to center the DrawRect and ensure the scale bounds
+
+                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
                     mAnimatedZoomRunnable.translateIfNeeded(getPosX(), getPosY(), 0, 0);
 
                 } else if (!drawRect.contains(viewRect)) {
 
+                    L.d(TAG, "MotionEvent.ACTION_UP - ViewRect in on an edge of DrawRect");
+
+                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
                     // TODO handle this case nicely - not just re-center
                     mAnimatedZoomRunnable.translateIfNeeded(getPosX(), getPosY(), 0, 0);
 
-                    if (viewRect.left < drawRect.left) {
+                    if (viewRect.left > drawRect.left) {
                         L.d(TAG, "left");
                     }
 
@@ -272,14 +282,16 @@ public class ZoomLayout extends FrameLayout {
                         L.d(TAG, "top");
                     }
 
-                    if (viewRect.bottom > drawRect.bottom) {
+                    if (viewRect.bottom < drawRect.bottom) {
                         L.d(TAG, "bottom");
                     }
 
                 } else {
 
+                    L.d(TAG, "MotionEvent.ACTION_UP - ViewRect is inside DrawRect");
+
                     // The ViewPort is inside the DrawRect - no problem
-                    mAnimatedZoomRunnable.scaleIfNeeded(currentScale, newScale, mFocusX, mFocusY);
+                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
 
                 }
 
@@ -307,12 +319,15 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onDoubleTapEvent(MotionEvent e) {
-            return mDoubleTapDispatcher.onDoubleTap(e);
+            return (e.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP &&
+                    mDoubleTapDispatcher.onDoubleTap(e);
         }
 
         @Override
         public void onLongPress(MotionEvent e) {
-            mLongTapDispatcher.onLongPress(e);
+            if (!mScaleDetector.isInProgress()) {
+                mLongTapDispatcher.onLongPress(e);
+            }
         }
 
         @Override
@@ -330,8 +345,8 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            if (getDrawingRect().contains(getViewPortRect())) {
-                float newScale = getScale() < mMinScale ? mMinScale : (mMaxScale < getScale() ? mMaxScale : getScale());
+            if (getDrawRect().contains(getViewPortRect())) {
+                float newScale = NumberUtils.clamp(mMinScale, getScale(), mMaxScale);
                 if (NumberUtils.isEqual(newScale, getScale())) {
                     // only fling if no scale is needed - scale will happen on ACTION_UP
                     mFlingRunnable = new FlingRunnable(getContext());
@@ -345,20 +360,6 @@ public class ZoomLayout extends FrameLayout {
 
     }
 
-    private void cancelFling() {
-        if (mFlingRunnable != null) {
-            mFlingRunnable.cancelFling();
-            mFlingRunnable = null;
-        }
-    }
-
-    private void cancelZoom() {
-        if (mAnimatedZoomRunnable != null) {
-            mAnimatedZoomRunnable.cancel();
-            mAnimatedZoomRunnable = null;
-        }
-    }
-
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
 
         private float mFocusX;
@@ -368,6 +369,7 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
+            printMatrixInfo("onScaleBegin", true, false);
             mCurrentX = mFocusX = mArray[0] = detector.getFocusX();
             mCurrentY = mFocusY = mArray[1] = detector.getFocusY();
             screenPointsToScaledPoints(mArray);
@@ -389,7 +391,22 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
+            printMatrixInfo("onScaleEnd", true, false);
             mZoomDispatcher.onZoomEnd(ZoomLayout.this, getScale());
+        }
+    }
+
+    private void cancelFling() {
+        if (mFlingRunnable != null) {
+            mFlingRunnable.cancelFling();
+            mFlingRunnable = null;
+        }
+    }
+
+    private void cancelZoom() {
+        if (mAnimatedZoomRunnable != null) {
+            mAnimatedZoomRunnable.cancel();
+            mAnimatedZoomRunnable = null;
         }
     }
 
@@ -410,8 +427,8 @@ public class ZoomLayout extends FrameLayout {
     /**
      * The rectangle representing the location of the view inside the ZoomView. including scale and translations.
      */
-    public RectF getDrawingRect() {
-        return mDrawingRect;
+    public RectF getDrawRect() {
+        return mDrawRect;
     }
 
     /**
@@ -419,30 +436,6 @@ public class ZoomLayout extends FrameLayout {
      */
     public RectF getViewPortRect() {
         return mViewPortRect;
-    }
-
-    public float getMaxScale() {
-        return mMaxScale;
-    }
-
-    public float getMinScale() {
-        return mMinScale;
-    }
-
-    public void setMinScale(float minScale) {
-        mMinScale = minScale;
-    }
-
-    public float getScale() {
-        return getMatrixValue(mScaleMatrix, Matrix.MSCALE_X);
-    }
-
-    public void setScale(float scale) {
-        setScale(scale, true);
-    }
-
-    public void setScale(float scale, boolean animate) {
-        setScale(scale, mFocusX, mFocusY, animate);
     }
 
     public boolean isAllowOverScale() {
@@ -477,13 +470,37 @@ public class ZoomLayout extends FrameLayout {
         mZoomDuration = zoomDuration;
     }
 
+    public float getMaxScale() {
+        return mMaxScale;
+    }
+
+    public float getMinScale() {
+        return mMinScale;
+    }
+
+    public void setMinScale(float minScale) {
+        mMinScale = minScale;
+    }
+
+    public float getScale() {
+        return getMatrixValue(mScaleMatrix, Matrix.MSCALE_X);
+    }
+
+    public void setScale(float scale) {
+        setScale(scale, true);
+    }
+
+    public void setScale(float scale, boolean animate) {
+        setScale(scale, mFocusX, mFocusY, animate);
+    }
+
     public boolean isScaled() {
         return !NumberUtils.isEqual(getScale(), 1.0f, 0.05f);
     }
 
     public void setScale(float scale, float focusX, float focusY, boolean animate) {
         if (!mAllowOverScale) {
-            scale = Math.max(mMinScale, Math.min(scale, mMaxScale));
+            scale = NumberUtils.clamp(mMinScale, scale, mMaxScale);
         }
         if (animate) {
             mAnimatedZoomRunnable = new AnimatedZoomRunnable();
@@ -492,6 +509,49 @@ public class ZoomLayout extends FrameLayout {
         } else {
             internalScale(scale, focusX, focusY);
         }
+    }
+
+    public boolean moveBy(float dX, float dY) {
+//        L.d(TAG, String.format(Locale.US, "moveBy[ %.2f, %.2f ]", dX, dY));
+        return moveTo((dX + getPosX()), (dY + getPosY()));
+    }
+
+    public boolean moveTo(float posX, float posY) {
+        RectF bounds = getTranslateBounds();
+        if (bounds.width() < 0 && bounds.height() < 0) {
+            return false;
+        }
+        L.d(TAG, String.format(Locale.US, "move x[ %.1f -> %.1f ], y[ %.1f -> %.1f ], bounds: %s", getPosX(), posX, getPosY(), posY, bounds.toString()));
+        printMatrixInfo("moveTo", true, false);
+        posX = NumberUtils.clamp(bounds.left, posX, bounds.right);
+        posY = NumberUtils.clamp(bounds.top, posY, bounds.bottom);
+        return internalMove(posX, posY);
+    }
+
+    /**
+     * Get the bounds that x and y coordinates must stay within when translating the view
+     * if we want to ensure that the ViewPort stays inside the DrawRect.
+     * @return A rect
+     */
+    public RectF getTranslateBounds() {
+        RectF r = new RectF();
+        r.left = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
+        r.top = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y);
+        r.right = (mDrawRect.width() - getWidth()) - Math.abs(r.left);
+        r.bottom = (mDrawRect.height() - getHeight()) - Math.abs(r.top);
+        return r;
+    }
+
+    private boolean internalMove(float posX, float posY) {
+        if (!NumberUtils.isEqual(posX, getPosX()) ||
+                !NumberUtils.isEqual(posY, getPosY())) {
+            mTranslateMatrix.setTranslate(-posX, -posY);
+            matrixUpdated();
+            mPanDispatcher.onPan(ZoomLayout.this);
+            invalidate();
+            return true;
+        }
+        return false;
     }
 
     private void internalScale(float scale, float focusX, float focusY) {
@@ -504,66 +564,45 @@ public class ZoomLayout extends FrameLayout {
         requestLayout();
     }
 
-    public boolean moveBy(float dX, float dY) {
-        return moveTo((dX + getPosX()), (dY + getPosY()));
-    }
-
-    private RectF getTranslateBounds() {
-        RectF r = new RectF();
-        r.left = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
-        r.top = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y);
-        r.right = (mDrawingRect.width() - getWidth()) - Math.abs(r.left);
-        r.bottom = (mDrawingRect.height() - getHeight()) - Math.abs(r.top);
-        return r;
-    }
-
-    public boolean moveTo(float posX, float posY) {
-        RectF bounds = getTranslateBounds();
-//        L.d(TAG, String.format(Locale.US, "move x[ %.1f -> %.1f ], y[ %.1f -> %.1f ], bounds: %s", getPosX(), posX, getPosY(), posY, bounds.toString()));
-        if (posX < bounds.left) {
-            posX = bounds.left;
-        } else if (posX > bounds.right) {
-            posX = bounds.right;
-        }
-        if (posY < bounds.top) {
-            posY = bounds.top;
-        } else if (posY > bounds.bottom) {
-            posY = bounds.bottom;
-        }
-        return internalMove(posX, posY);
-    }
-
-    private boolean internalMove(float posX, float posY) {
-        if (posX != getPosX() || posY != getPosY()) {
-            mTranslateMatrix.setTranslate(-posX, -posY);
-            matrixUpdated();
-            mPanDispatcher.onPan(ZoomLayout.this);
-            invalidate();
-            return true;
-        }
-        return false;
-    }
-
+    /**
+     * Update all variables that rely on the Matrix'es.
+     */
     private void matrixUpdated() {
-
+        // First inverse matrixes
         mScaleMatrix.invert(mScaleMatrixInverse);
         mTranslateMatrix.invert(mTranslateMatrixInverse);
-
-        mDrawingRect.set(0, 0, getChildViewWidth(), getChildViewHeight());
-        scaledPointsToScreenPoints(mDrawingRect);
+        // Update Draw and View rects
+        // first measure the DrawRect - Then set the coordinates accordingly
+        mDrawRect.set(0, 0, getChildViewWidth(), getChildViewHeight());
+        scaledPointsToScreenPoints(mDrawRect);
+        mDrawRect.set(0, 0, mDrawRect.width(), mDrawRect.height());
+        // Make the ViewPort the part
         mViewPortRect.set(0, 0, getWidth(), getHeight());
         screenPointsToScaledPoints(mViewPortRect);
-
     }
 
-    private float getPosX() {
+    /**
+     * Get the current x-translation
+     * @return
+     */
+    public float getPosX() {
         return -getMatrixValue(mTranslateMatrix, Matrix.MTRANS_X);
     }
 
-    private float getPosY() {
+    /**
+     * Get the current y-translation
+     * @return
+     */
+    public float getPosY() {
         return -getMatrixValue(mTranslateMatrix, Matrix.MTRANS_Y);
     }
 
+    /**
+     * Read a specific value from a given matrix
+     * @param matrix The Matrix to read a value from
+     * @param value The value-position to read
+     * @return The value at a given position
+     */
     private float getMatrixValue(Matrix matrix, int value) {
         matrix.getValues(mMatrixValues);
         return mMatrixValues[value];
@@ -706,18 +745,18 @@ public class ZoomLayout extends FrameLayout {
 
             final int startX = Math.round(mViewPortRect.left);
             final int minX, maxX;
-            if (mViewPortRect.width() < mDrawingRect.width()) {
+            if (mViewPortRect.width() < mDrawRect.width()) {
                 minX = 0;
-                maxX = Math.round(mDrawingRect.width() - mViewPortRect.width());
+                maxX = Math.round(mDrawRect.width() - mViewPortRect.width());
             } else {
                 minX = maxX = startX;
             }
 
             final int startY = Math.round(mViewPortRect.top);
             final int minY, maxY;
-            if (mViewPortRect.height() < mDrawingRect.height()) {
+            if (mViewPortRect.height() < mDrawRect.height()) {
                 minY = 0;
-                maxY = Math.round(mDrawingRect.height() - mViewPortRect.height());
+                maxY = Math.round(mDrawRect.height() - mViewPortRect.height());
             } else {
                 minY = maxY = startY;
             }
@@ -989,11 +1028,15 @@ public class ZoomLayout extends FrameLayout {
         }
     }
 
-    private void printMatrixInfo(String tag) {
-        L.d(TAG, String.format("%s: mScaleMatrix            %s", tag, getMatrixBasicInfo(mScaleMatrix)));
-        L.d(TAG, String.format("%s: mTranslateMatrix        %s", tag, getMatrixBasicInfo(mTranslateMatrix)));
-        L.d(TAG, String.format("%s: mScaleMatrixInverse     %s", tag, getMatrixBasicInfo(mScaleMatrixInverse)));
-        L.d(TAG, String.format("%s: mTranslateMatrixInverse %s", tag, getMatrixBasicInfo(mTranslateMatrixInverse)));
+    private void printMatrixInfo(String tag, boolean regulare, boolean inverted) {
+        if (regulare) {
+            L.d(TAG, String.format("%s: mScaleMatrix            %s", tag, getMatrixBasicInfo(mScaleMatrix)));
+            L.d(TAG, String.format("%s: mTranslateMatrix        %s", tag, getMatrixBasicInfo(mTranslateMatrix)));
+        }
+        if (inverted) {
+            L.d(TAG, String.format("%s: mScaleMatrixInverse     %s", tag, getMatrixBasicInfo(mScaleMatrixInverse)));
+            L.d(TAG, String.format("%s: mTranslateMatrixInverse %s", tag, getMatrixBasicInfo(mTranslateMatrixInverse)));
+        }
     }
 
     private static final String MATRIX_BACIS_FORMAT = "[ scale:%.2f, x:%.2f, y:%.2f ]";
@@ -1011,7 +1054,7 @@ public class ZoomLayout extends FrameLayout {
 
     private void printViewRects(String tag) {
         printViewRect(tag, "ViewRect", mViewPortRect);
-        printViewRect(tag, "DrawRect", mDrawingRect);
+        printViewRect(tag, "DrawRect", mDrawRect);
     }
 
     private static final String RECT_FORMAT = "%s: %s [ %.0f, %.0f, %.0f, %.0f ], w:%s, h%s";

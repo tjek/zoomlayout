@@ -27,6 +27,8 @@ public class SingleImageViewActivity extends AppCompatActivity {
         mTextView = (TextView) findViewById(R.id.info);
         mImageView = (ImageView) findViewById(R.id.imageViewSingle);
 
+        mZoomLayout.setMinScale(0.9f);
+
         // setup ZoomLayout
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, mTextView);
         mZoomLayout.setOnPanListener(log);
