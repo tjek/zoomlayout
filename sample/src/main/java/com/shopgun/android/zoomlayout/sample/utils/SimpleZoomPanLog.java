@@ -25,7 +25,7 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     public SimpleZoomPanLog(String tag, TextView textView) {
         mTag = tag;
         mTextView = textView;
-        log("init", 1.0f, 0f, 0f, "none", "none", "none");
+        log("init", 1.0f, 0f, 0f, "none", "none");
     }
 
     public void setLogger(ZoomLayout zoomLayout) {
@@ -69,15 +69,14 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     public static final String FORMAT =
             "%s - s:%.2f, x:%.0f, y:%.0f\n" +
             "Rect %s\n" +
-            "ViewPort %s\n" +
             "DrawRect %s";
 
     private void log(String msg, ZoomLayout view) {
-        log(msg, view.getScale(), view.getPosX(), view.getPosY(), r(view.getTranslateBounds()), r(view.getViewPortRect()), r(view.getDrawRect()));
+        log(msg, view.getScale(), view.getPosX(), view.getPosY(), r(view.getTranslateBounds()), r(view.getDrawRect()));
     }
 
-    private void log(String msg, float scale, float x, float y, String bounds, String vireRect, String drawRect) {
-        String text = String.format(Locale.US, FORMAT, msg, scale, x, y, bounds, vireRect, drawRect);
+    private void log(String msg, float scale, float x, float y, String bounds, String drawRect) {
+        String text = String.format(Locale.US, FORMAT, msg, scale, x, y, bounds, drawRect);
         if (mTextView != null) {
             mTextView.setText(text);
         }
@@ -90,30 +89,8 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     }
 
     @Override
-    public boolean onContentDoubleTap(ZoomLayout view, float posX, float posY) {
-        L.d(TAG, String.format(Locale.US, "onContentDoubleTap[ x:%s, y:%s ]", posX, posY));
-        return false;
-    }
-
-    @Override
-    public boolean onViewDoubleTap(ZoomLayout view) {
-        L.d(TAG, String.format(Locale.US, "onViewDoubleTap"));
-        return false;
-    }
-
-    @Override
-    public void onContentLongTap(ZoomLayout view, float posX, float posY) {
-        L.d(TAG, String.format(Locale.US, "onContentLongTap[ x:%s, y:%s ]", posX, posY));
-    }
-
-    @Override
-    public void onViewLongTap(ZoomLayout view) {
-        L.d(TAG, String.format(Locale.US, "onViewLongTap"));
-    }
-
-    @Override
     public boolean onContentTap(ZoomLayout view, float posX, float posY) {
-        L.d(TAG, String.format(Locale.US, "onContentTap[ x:%s, y:%s ]", posX, posY));
+        log("onContentTap", posX, posY);
         return false;
     }
 
@@ -122,5 +99,32 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
         L.d(TAG, "onViewTap");
         return false;
     }
+
+    @Override
+    public boolean onContentDoubleTap(ZoomLayout view, float posX, float posY) {
+        log("onContentDoubleTap", posX, posY);
+        return false;
+    }
+
+    @Override
+    public boolean onViewDoubleTap(ZoomLayout view) {
+        L.d(TAG, "onViewDoubleTap");
+        return false;
+    }
+
+    @Override
+    public void onContentLongTap(ZoomLayout view, float posX, float posY) {
+        log("onContentLongTap", posX, posY);
+    }
+
+    @Override
+    public void onViewLongTap(ZoomLayout view) {
+        L.d(TAG, "onViewLongTap");
+    }
+
+    private void log(String msg, float x, float y) {
+        L.d(TAG, String.format(Locale.US, "%s[ x:%.1f, y:%.1f ]", msg, (x*100f), (y*100f)));
+    }
+
 
 }

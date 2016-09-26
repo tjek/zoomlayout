@@ -417,7 +417,6 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
-            printMatrixInfo("onScaleBegin", true, false);
             mCurrentX = mFocusX = mArray[0] = detector.getFocusX();
             mCurrentY = mFocusY = mArray[1] = detector.getFocusY();
             screenPointsToScaledPoints(mArray);
@@ -431,7 +430,17 @@ public class ZoomLayout extends FrameLayout {
         public boolean onScale(ScaleGestureDetector detector) {
             float scale = getScale() * detector.getScaleFactor();
 //            moveBy(mCurrentX - detector.getFocusX(), mCurrentY - detector.getFocusY());
-            internalScale(scale, mFocusX, mFocusY);
+            if (detector.getTimeDelta() == 0) {
+                // The first scale event translates the content, so we'll counter that translate
+                float x1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
+                float y1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y);
+                internalScale(scale, mFocusX, mFocusY);
+                float dX = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X)-x1;
+                float dY = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y)-y1;
+                moveBy(dX, dY);
+            } else {
+                internalScale(scale, mFocusX, mFocusY);
+            }
             mCurrentX = detector.getFocusX();
             mCurrentY = detector.getFocusY();
             return true;
@@ -477,13 +486,6 @@ public class ZoomLayout extends FrameLayout {
      */
     public RectF getDrawRect() {
         return mDrawRect;
-    }
-
-    /**
-     * The visible region of ZoomView.
-     */
-    public RectF getViewPortRect() {
-        return mViewPortRect;
     }
 
     public boolean isAllowOverScale() {
@@ -569,8 +571,7 @@ public class ZoomLayout extends FrameLayout {
         if (bounds.width() < 0 && bounds.height() < 0) {
             return false;
         }
-        L.d(TAG, String.format(Locale.US, "move x[ %.1f -> %.1f ], y[ %.1f -> %.1f ], bounds: %s", getPosX(), posX, getPosY(), posY, bounds.toString()));
-        printMatrixInfo("moveTo", true, false);
+//        L.d(TAG, String.format(Locale.US, "move x[ %.1f -> %.1f ], y[ %.1f -> %.1f ], bounds: %s", getPosX(), posX, getPosY(), posY, bounds.toString()));
         posX = NumberUtils.clamp(bounds.left, posX, bounds.right);
         posY = NumberUtils.clamp(bounds.top, posY, bounds.bottom);
         return internalMove(posX, posY);
@@ -912,17 +913,17 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public interface OnTapListener {
-        boolean onContentTap(ZoomLayout view, float posX, float posY);
+        boolean onContentTap(ZoomLayout view, float x, float y);
         boolean onViewTap(ZoomLayout view);
     }
 
     public interface OnDoubleTapListener {
-        boolean onContentDoubleTap(ZoomLayout view, float posX, float posY);
+        boolean onContentDoubleTap(ZoomLayout view, float x, float y);
         boolean onViewDoubleTap(ZoomLayout view);
     }
 
     public interface OnLongTapListener {
-        void onContentLongTap(ZoomLayout view, float posX, float posY);
+        void onContentLongTap(ZoomLayout view, float x, float y);
         void onViewLongTap(ZoomLayout view);
     }
 
