@@ -185,20 +185,6 @@ public class ZoomLayout extends FrameLayout {
                 Math.round(mArray[2]), Math.round(mArray[3]));
     }
 
-    private void scaledPointsToScreenPoints(MotionEvent ev) {
-        mArray[0] = ev.getX();
-        mArray[1] = ev.getY();
-        mArray = scaledPointsToScreenPoints(mArray);
-        ev.setLocation(mArray[0], mArray[1]);
-    }
-
-    private void screenPointsToScaledPoints(MotionEvent ev) {
-        mArray[0] = ev.getX();
-        mArray[1] = ev.getY();
-        mArray = screenPointsToScaledPoints(mArray);
-        ev.setLocation(mArray[0], mArray[1]);
-    }
-
     private float[] scaledPointsToScreenPoints(float[] a) {
         mScaleMatrix.mapPoints(a);
         mTranslateMatrix.mapPoints(a);
@@ -213,7 +199,10 @@ public class ZoomLayout extends FrameLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        screenPointsToScaledPoints(ev);
+        mArray[0] = ev.getX();
+        mArray[1] = ev.getY();
+        screenPointsToScaledPoints(mArray);
+        ev.setLocation(mArray[0], mArray[1]);
         return super.dispatchTouchEvent(ev);
     }
 
@@ -224,7 +213,10 @@ public class ZoomLayout extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        scaledPointsToScreenPoints(ev);
+        mArray[0] = ev.getX();
+        mArray[1] = ev.getY();
+        scaledPointsToScreenPoints(mArray);
+        ev.setLocation(mArray[0], mArray[1]);
 
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
