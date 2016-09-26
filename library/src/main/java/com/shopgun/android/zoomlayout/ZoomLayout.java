@@ -112,15 +112,16 @@ public class ZoomLayout extends FrameLayout {
             mDebugPaintXY.setColor(Color.BLUE);
             mDebugPaintFocus = new Paint();
             mDebugPaintFocus.setColor(Color.MAGENTA);
-            mDebugRadius = UnitUtils.dpToPx(2, getContext());
+            mDebugRadius = UnitUtils.dpToPx(4, getContext());
         }
     }
 
     protected void debugDraw(Canvas canvas) {
         if (DEBUG_DRAW) {
             ensureDebugOptions();
-            canvas.drawCircle(getPosX(), getPosY(), mDebugRadius, mDebugPaintXY);
-            canvas.drawCircle(mFocusX, mFocusY, mDebugRadius, mDebugPaintFocus);
+            int r = (int)((float)mDebugRadius * getMatrixValue(mScaleMatrixInverse, Matrix.MSCALE_X));
+            canvas.drawCircle(getPosX(), getPosY(), r, mDebugPaintXY);
+            canvas.drawCircle(mFocusX, mFocusY, r, mDebugPaintFocus);
         }
     }
 
