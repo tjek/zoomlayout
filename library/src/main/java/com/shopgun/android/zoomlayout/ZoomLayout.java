@@ -34,6 +34,7 @@ public class ZoomLayout extends FrameLayout {
 
     private ScaleGestureDetector mScaleDetector;
     private GestureDetector mGestureDetector;
+    private GestureListener mGestureListener;
 
     private Matrix mScaleMatrix = new Matrix();
     private Matrix mScaleMatrixInverse = new Matrix();
@@ -98,7 +99,7 @@ public class ZoomLayout extends FrameLayout {
 
     private void init(Context context, AttributeSet attrs) {
         mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
-        mGestureDetector = new GestureDetector(context, new GestureListener());
+        mGestureDetector = new GestureDetector(context, mGestureListener = new GestureListener());
         mTranslateMatrix.setTranslate(0, 0);
         mScaleMatrix.setScale(1, 1);
     }
@@ -235,8 +236,9 @@ public class ZoomLayout extends FrameLayout {
         if (action == MotionEvent.ACTION_DOWN) {
             L.d(TAG, "############################# ACTION_DOWN ###############################");
         }
-        boolean handled = mScaleDetector.onTouchEvent(ev);
-        handled = mGestureDetector.onTouchEvent(ev) || handled;
+        boolean consumed = mScaleDetector.onTouchEvent(ev);
+        consumed = mGestureDetector.onTouchEvent(ev) || consumed;
+        consumed = mGestureListener.onUp(ev) || consumed;
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
@@ -300,7 +302,7 @@ public class ZoomLayout extends FrameLayout {
 
                 if (mAnimatedZoomRunnable.scale() || mAnimatedZoomRunnable.translate()) {
                     ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
-                    handled = true;
+                    consumed = true;
                 } else {
                     cancelZoom();
                 }
@@ -312,10 +314,12 @@ public class ZoomLayout extends FrameLayout {
 
         }
 
-        return handled;
+        return consumed;
     }
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+
+        private boolean mScrolling = false;
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
@@ -367,6 +371,9 @@ public class ZoomLayout extends FrameLayout {
             boolean consumed = false;
             if (e2.getPointerCount() == 1 && !mScaleDetector.isInProgress()) {
                 // only drag if we have one pointer and aren't already scaling
+                if (!mScrolling) {
+                    mPanDispatcher.onPanBegin(ZoomLayout.this);
+                }
                 consumed = moveBy(distanceX, distanceY);
                 if (mAllowParentInterceptOnEdge && !consumed && (!isScaled() || mAllowParentInterceptOnScaled)) {
                     requestDisallowInterceptTouchEvent(false);
@@ -386,6 +393,15 @@ public class ZoomLayout extends FrameLayout {
                     ViewCompat.postOnAnimation(ZoomLayout.this, mFlingRunnable);
                     return true;
                 }
+            }
+            return false;
+        }
+
+        public boolean onUp(MotionEvent e) {
+            if (mScrolling) {
+                mPanDispatcher.onPanEnd(ZoomLayout.this);
+                mScrolling = false;
+                return true;
             }
             return false;
         }
