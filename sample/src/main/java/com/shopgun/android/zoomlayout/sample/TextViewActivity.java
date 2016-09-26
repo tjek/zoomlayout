@@ -26,8 +26,7 @@ public class TextViewActivity extends AppCompatActivity {
 
         // setup ZoomLayout
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, mTextView);
-        mZoomLayout.setOnPanListener(log);
-        mZoomLayout.setOnZoomListener(log);
+        log.setLogger(mZoomLayout);
 
     }
 

@@ -97,8 +97,7 @@ public class ViewPagerActivity extends AppCompatActivity {
             }
 
             ZoomLayout zoomLayout = (ZoomLayout) view.findViewById(R.id.zoomLayout);
-            zoomLayout.setOnZoomListener(mLogger);
-            zoomLayout.setOnPanListener(mLogger);
+            mLogger.setLogger(zoomLayout);
 
             return view;
         }

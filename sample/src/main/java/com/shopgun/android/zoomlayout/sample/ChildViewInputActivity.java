@@ -20,8 +20,7 @@ public class ChildViewInputActivity extends AppCompatActivity {
         ZoomLayout zoomLayout = (ZoomLayout) findViewById(R.id.zoomLayout);
         TextView textView = (TextView) findViewById(R.id.info);
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, textView);
-        zoomLayout.setOnPanListener(log);
-        zoomLayout.setOnZoomListener(log);
+        log.setLogger(zoomLayout);
 
     }
 }

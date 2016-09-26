@@ -32,8 +32,7 @@ public class DoubleImageViewActivity extends AppCompatActivity {
         mTextView = (TextView) findViewById(R.id.info);
 
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, mTextView);
-        mZoomLayout.setOnPanListener(log);
-        mZoomLayout.setOnZoomListener(log);
+        log.setLogger(mZoomLayout);
 
         // Load content to zoom
         mLeft = (ImageView) findViewById(R.id.imageViewLeft);

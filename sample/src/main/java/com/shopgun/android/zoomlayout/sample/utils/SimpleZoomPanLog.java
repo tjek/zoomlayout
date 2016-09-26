@@ -3,12 +3,18 @@ package com.shopgun.android.zoomlayout.sample.utils;
 import android.graphics.RectF;
 import android.widget.TextView;
 
+import com.shopgun.android.utils.log.L;
 import com.shopgun.android.zoomlayout.ZoomLayout;
 
 import java.util.Locale;
 
-public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener, ZoomLayout.OnPanListener {
+public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
+        ZoomLayout.OnPanListener,
+        ZoomLayout.OnTapListener,
+        ZoomLayout.OnDoubleTapListener,
+        ZoomLayout.OnLongTapListener {
 
+    public static final String TAG = SimpleZoomPanLog.class.getSimpleName();
     String mTag;
     TextView mTextView;
 
@@ -20,6 +26,14 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener, ZoomLayout.O
         mTag = tag;
         mTextView = textView;
         log("init", 1.0f, 0f, 0f, "none", "none", "none");
+    }
+
+    public void setLogger(ZoomLayout zoomLayout) {
+        zoomLayout.setOnPanListener(this);
+        zoomLayout.setOnZoomListener(this);
+        zoomLayout.setOnTapListener(this);
+        zoomLayout.setOnDoubleTapListener(this);
+        zoomLayout.setOnLongTapListener(this);
     }
 
     @Override
@@ -73,6 +87,40 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener, ZoomLayout.O
     public static final String RECT_FORMAT = "[ %.0f, %.0f, %.0f, %.0f ]";
     private String r(RectF r) {
         return String.format(Locale.US, RECT_FORMAT, r.left, r.top, r.right, r.bottom);
+    }
+
+    @Override
+    public boolean onContentDoubleTap(ZoomLayout view, float posX, float posY) {
+        L.d(TAG, String.format(Locale.US, "onContentDoubleTap[ x:%s, y:%s ]", posX, posY));
+        return false;
+    }
+
+    @Override
+    public boolean onViewDoubleTap(ZoomLayout view) {
+        L.d(TAG, String.format(Locale.US, "onViewDoubleTap"));
+        return false;
+    }
+
+    @Override
+    public void onContentLongTap(ZoomLayout view, float posX, float posY) {
+        L.d(TAG, String.format(Locale.US, "onContentLongTap[ x:%s, y:%s ]", posX, posY));
+    }
+
+    @Override
+    public void onViewLongTap(ZoomLayout view) {
+        L.d(TAG, String.format(Locale.US, "onViewLongTap"));
+    }
+
+    @Override
+    public boolean onContentTap(ZoomLayout view, float posX, float posY) {
+        L.d(TAG, String.format(Locale.US, "onContentTap[ x:%s, y:%s ]", posX, posY));
+        return false;
+    }
+
+    @Override
+    public boolean onViewTap(ZoomLayout view) {
+        L.d(TAG, "onViewTap");
+        return false;
     }
 
 }
