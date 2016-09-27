@@ -29,6 +29,7 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     }
 
     public void setLogger(ZoomLayout zoomLayout) {
+        zoomLayout.DEBUG = true;
         zoomLayout.setOnPanListener(this);
         zoomLayout.setOnZoomListener(this);
         zoomLayout.setOnTapListener(this);

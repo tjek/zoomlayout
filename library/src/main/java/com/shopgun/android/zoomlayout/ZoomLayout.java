@@ -26,7 +26,7 @@ public class ZoomLayout extends FrameLayout {
 
     public static final String TAG = ZoomLayout.class.getSimpleName();
 
-    public boolean DEBUG_DRAW = true;
+    public boolean DEBUG = false;
 
     private ScaleGestureDetector mScaleDetector;
     private GestureDetector mGestureDetector;
@@ -125,7 +125,7 @@ public class ZoomLayout extends FrameLayout {
         float scale = getScale();
         canvas.scale(scale, scale, mFocusX, mFocusY);
         super.dispatchDraw(canvas);
-        if (DEBUG_DRAW) {
+        if (DEBUG) {
             ZoomUtils.debugDraw(canvas, getContext(), getPosX(), getPosY(), mFocusX, mFocusY, getMatrixValue(mScaleMatrixInverse, Matrix.MSCALE_X));
         }
         canvas.restore();
@@ -192,7 +192,7 @@ public class ZoomLayout extends FrameLayout {
 
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
-            L.d(TAG, "############################# ACTION_DOWN ###############################");
+            log("### MotionEvent.ACTION_DOWN ###");
         }
         boolean consumed = mScaleDetector.onTouchEvent(ev);
         consumed = mGestureDetector.onTouchEvent(ev) || consumed;
@@ -217,7 +217,7 @@ public class ZoomLayout extends FrameLayout {
                         (mViewPortRect.height() > mDrawRect.height() &&
                                 mViewPortRect.width() > mDrawRect.width())) {
 
-                    L.d(TAG, "ViewRect can contain DrawRect");
+                    log("ViewRect can contain DrawRect");
 
                     // The ViewRect does (or can) contain DrawRect
                     // We need to center the DrawRect and ensure the scale bounds
@@ -227,31 +227,31 @@ public class ZoomLayout extends FrameLayout {
 
                 } else if (!mDrawRect.contains(mViewPortRect)) {
 
-                    L.d(TAG, "ViewRect in on an edge of DrawRect");
+                    log("ViewRect in on an edge of DrawRect");
 
                     mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
                     // TODO handle this case nicely - not just re-center
                     mAnimatedZoomRunnable.translateIfNeeded(getPosX(), getPosY(), 0, 0);
 
                     if (mViewPortRect.left > mDrawRect.left) {
-                        L.d(TAG, "left");
+                        log("left");
                     }
 
                     if (mViewPortRect.right > mDrawRect.right) {
-                        L.d(TAG, "right");
+                        log("right");
                     }
 
                     if (mViewPortRect.top < mDrawRect.top) {
-                        L.d(TAG, "top");
+                        log("top");
                     }
 
                     if (mViewPortRect.bottom < mDrawRect.bottom) {
-                        L.d(TAG, "bottom");
+                        log("bottom");
                     }
 
                 } else {
 
-                    L.d(TAG, "ViewRect is inside DrawRect");
+                    log("ViewRect is inside DrawRect");
 
                     // The ViewPort is inside the DrawRect - no problem
                     mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
@@ -265,7 +265,7 @@ public class ZoomLayout extends FrameLayout {
                     cancelZoom();
                 }
 
-                L.d(TAG, "############################# ACTION_UP ###############################");
+                log("### MotionEvent.ACTION_UP ###");
 
                 break;
             }
@@ -493,7 +493,7 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public boolean moveBy(float dX, float dY) {
-//        L.d(TAG, String.format(Locale.US, "moveBy[ %.2f, %.2f ]", dX, dY));
+//        log(String.format(Locale.US, "moveBy[ %.2f, %.2f ]", dX, dY));
         return moveBy(dX, dY, true);
     }
 
@@ -502,7 +502,7 @@ public class ZoomLayout extends FrameLayout {
     }
 
     private boolean moveBy(float dX, float dY, boolean clamp) {
-//        L.d(TAG, String.format(Locale.US, "moveBy[ %.2f, %.2f ]", dX, dY));
+//        log(String.format(Locale.US, "moveBy[ %.2f, %.2f ]", dX, dY));
         return moveTo(dX + getPosX(), dY + getPosY(), clamp);
     }
 
@@ -512,7 +512,7 @@ public class ZoomLayout extends FrameLayout {
             if (bounds.isEmpty()) {
                 return false;
             }
-//        L.d(TAG, String.format(Locale.US, "move x[ %.1f -> %.1f ], y[ %.1f -> %.1f ], bounds: %s", getPosX(), posX, getPosY(), posY, bounds.toString()));
+//        log(String.format(Locale.US, "move x[ %.1f -> %.1f ], y[ %.1f -> %.1f ], bounds: %s", getPosX(), posX, getPosY(), posY, bounds.toString()));
             posX = NumberUtils.clamp(bounds.left, posX, bounds.right);
             posY = NumberUtils.clamp(bounds.top, posY, bounds.bottom);
         }
@@ -633,7 +633,7 @@ public class ZoomLayout extends FrameLayout {
             mFocalY = focalY;
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
-            L.d(TAG, String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
+            log(String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
             mZoomDispatcher.onZoomBegin(ZoomLayout.this, getScale());
             return this;
         }
@@ -660,7 +660,7 @@ public class ZoomLayout extends FrameLayout {
             mYStart = currentY;
             mXEnd = targetX;
             mYEnd = targetY;
-            L.d(TAG, String.format("AnimatedZoomRunnable.Translate: x[%s -> %s], y[%s -> %s]", mXStart, mXEnd, mYStart, mYEnd));
+            log(String.format("AnimatedZoomRunnable.Translate: x[%s -> %s], y[%s -> %s]", mXStart, mXEnd, mYStart, mYEnd));
             mPanDispatcher.onPanBegin(ZoomLayout.this);
             return this;
         }
@@ -755,7 +755,7 @@ public class ZoomLayout extends FrameLayout {
             mCurrentX = startX;
             mCurrentY = startY;
 
-            L.d(TAG, String.format("fling. StartX:%s StartY:%s MaxX:%s MaxY:%s doScroll:%s", startX, startY, maxX, maxY, (startX != maxX || startY != maxY)));
+            log(String.format("fling. StartX:%s StartY:%s MaxX:%s MaxY:%s doScroll:%s", startX, startY, maxX, maxY, (startX != maxX || startY != maxY)));
 
             // If we actually can move, fling the scroller
             if (startX != maxX || startY != maxY) {
@@ -790,7 +790,7 @@ public class ZoomLayout extends FrameLayout {
                 final int newX = mScroller.getCurrX();
                 final int newY = mScroller.getCurrY();
 
-//                L.d(TAG, String.format("mCurrentX:%s, newX:%s, mCurrentY:%s, newY:%s", mCurrentX, newX, mCurrentY, newY));
+//                log(String.format("mCurrentX:%s, newX:%s, mCurrentY:%s, newY:%s", mCurrentX, newX, mCurrentY, newY));
                 moveBy(mCurrentX - newX, mCurrentY - newY);
 
                 mCurrentX = newX;
@@ -947,20 +947,26 @@ public class ZoomLayout extends FrameLayout {
         }
     }
 
+    private void log(String msg) {
+        if (DEBUG) {
+            L.d(TAG, msg);
+        }
+    }
+
     private void printMatrixInfo(String tag, boolean regulare, boolean inverted) {
         if (regulare) {
-            L.d(TAG, String.format("%s: mScaleMatrix            %s", tag, ZoomUtils.getMatrixBasicInfo(mScaleMatrix)));
-            L.d(TAG, String.format("%s: mTranslateMatrix        %s", tag, ZoomUtils.getMatrixBasicInfo(mTranslateMatrix)));
+            log(String.format("%s: mScaleMatrix            %s", tag, ZoomUtils.getMatrixBasicInfo(mScaleMatrix)));
+            log(String.format("%s: mTranslateMatrix        %s", tag, ZoomUtils.getMatrixBasicInfo(mTranslateMatrix)));
         }
         if (inverted) {
-            L.d(TAG, String.format("%s: mScaleMatrixInverse     %s", tag, ZoomUtils.getMatrixBasicInfo(mScaleMatrixInverse)));
-            L.d(TAG, String.format("%s: mTranslateMatrixInverse %s", tag, ZoomUtils.getMatrixBasicInfo(mTranslateMatrixInverse)));
+            log(String.format("%s: mScaleMatrixInverse     %s", tag, ZoomUtils.getMatrixBasicInfo(mScaleMatrixInverse)));
+            log(String.format("%s: mTranslateMatrixInverse %s", tag, ZoomUtils.getMatrixBasicInfo(mTranslateMatrixInverse)));
         }
     }
 
     private void printViewRects(String tag) {
-        L.d(TAG, ZoomUtils.getViewRectInfo(tag, "ViewRect", mViewPortRect));
-        L.d(TAG, ZoomUtils.getViewRectInfo(tag, "DrawRect", mDrawRect));
+        log(ZoomUtils.getViewRectInfo(tag, "ViewRect", mViewPortRect));
+        log(ZoomUtils.getViewRectInfo(tag, "DrawRect", mDrawRect));
     }
 
 }
