@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.ViewCompat;
@@ -196,80 +197,71 @@ public class ZoomLayout extends FrameLayout {
         }
         boolean consumed = mScaleDetector.onTouchEvent(ev);
         consumed = mGestureDetector.onTouchEvent(ev) || consumed;
-        consumed = mGestureListener.onUp(ev) || consumed;
 
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                requestDisallowInterceptTouchEvent(true);
-                cancelFling();
-                cancelZoom();
-                break;
+        if (action == MotionEvent.ACTION_UP) {
 
-            case MotionEvent.ACTION_UP: {
+            // manually call up
+            consumed = mGestureListener.onUp(ev) || consumed;
 
-                mAnimatedZoomRunnable = new AnimatedZoomRunnable();
+            mAnimatedZoomRunnable = new AnimatedZoomRunnable();
 
-                float newScale = NumberUtils.clamp(mMinScale, getScale(), mMaxScale);
+            float newScale = NumberUtils.clamp(mMinScale, getScale(), mMaxScale);
 
-                // Find current bounds before applying scale to do the rest of the calculations
+            // Find current bounds before applying scale to do the rest of the calculations
 
-                if (mViewPortRect.contains(mDrawRect) ||
-                        (mViewPortRect.height() > mDrawRect.height() &&
-                                mViewPortRect.width() > mDrawRect.width())) {
+            if (mViewPortRect.height() > mDrawRect.height() &&
+                            mViewPortRect.width() > mDrawRect.width()) {
 
-                    log("ViewRect can contain DrawRect");
+                log("ViewRect can contain DrawRect");
 
-                    // The ViewRect does (or can) contain DrawRect
-                    // We need to center the DrawRect and ensure the scale bounds
+                // The ViewRect does (or can) contain DrawRect
+                // We need to center the DrawRect and ensure the scale bounds
 
-                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
-                    mAnimatedZoomRunnable.translateIfNeeded(getPosX(), getPosY(), 0, 0);
+//                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
+//                    mAnimatedZoomRunnable.scale(getScale(), getScale(), getWidth()/2, getHeight()/2);
+//                    mTranslateMatrix.setTranslate(0,0);
+//                    mAnimatedZoomRunnable.translate(getPosX(), getPosY(), 0, 0, true);
 
-                } else if (!mDrawRect.contains(mViewPortRect)) {
+            } else if (!mDrawRect.contains(mViewPortRect)) {
 
-                    log("ViewRect in on an edge of DrawRect");
+                log("ViewRect in on an edge of DrawRect");
 
-                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
-                    // TODO handle this case nicely - not just re-center
-                    mAnimatedZoomRunnable.translateIfNeeded(getPosX(), getPosY(), 0, 0);
+//                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
+                // TODO handle this case nicely - not just re-center
+//                    mAnimatedZoomRunnable.translateIfNeeded(getPosX(), getPosY(), 0, 0);
 
-                    if (mViewPortRect.left > mDrawRect.left) {
-                        log("left");
-                    }
-
-                    if (mViewPortRect.right > mDrawRect.right) {
-                        log("right");
-                    }
-
-                    if (mViewPortRect.top < mDrawRect.top) {
-                        log("top");
-                    }
-
-                    if (mViewPortRect.bottom < mDrawRect.bottom) {
-                        log("bottom");
-                    }
-
-                } else {
-
-                    log("ViewRect is inside DrawRect");
-
-                    // The ViewPort is inside the DrawRect - no problem
-                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
-
+                if (mViewPortRect.left > mDrawRect.left) {
+                    log("left");
                 }
 
-                if (mAnimatedZoomRunnable.scale() || mAnimatedZoomRunnable.translate()) {
-                    ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
-                    consumed = true;
-                } else {
-                    cancelZoom();
+                if (mViewPortRect.right > mDrawRect.right) {
+                    log("right");
                 }
 
-                log("### MotionEvent.ACTION_UP ###");
+                if (mViewPortRect.top < mDrawRect.top) {
+                    log("top");
+                }
 
-                break;
+                if (mViewPortRect.bottom < mDrawRect.bottom) {
+                    log("bottom");
+                }
+
+            } else {
+
+                log("ViewRect is inside DrawRect");
+
+                // The ViewPort is inside the DrawRect - no problem
+                mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
+
             }
 
+            if (mAnimatedZoomRunnable.scale() || mAnimatedZoomRunnable.translate()) {
+                ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
+                consumed = true;
+            } else {
+                cancelZoom();
+            }
+            log("### MotionEvent.ACTION_UP ###");
         }
 
         return consumed;
@@ -283,11 +275,10 @@ public class ZoomLayout extends FrameLayout {
         public boolean onSingleTapConfirmed(MotionEvent e) {
             if (mTapListener != null) {
                 if (mDrawRect.contains(e.getX(), e.getY())) {
-                    float percentX = (e.getX()-mDrawRect.left)/mDrawRect.width();
-                    float percentY = (e.getY()-mDrawRect.top)/mDrawRect.height();
-                    return mTapListener.onContentTap(ZoomLayout.this, percentX, percentY);
+                    PointF p = getRelPosition(e, getChildAt(0));
+                    return mTapListener.onContentTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                 } else {
-                    return mTapListener.onViewTap(ZoomLayout.this);
+                    return mTapListener.onViewTap(ZoomLayout.this, e.getX(), e.getY());
                 }
             }
             return false;
@@ -298,11 +289,10 @@ public class ZoomLayout extends FrameLayout {
             if ((e.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
                 if (mDoubleTapListener != null) {
                     if (mDrawRect.contains(e.getX(), e.getY())) {
-                        float percentX = (e.getX()-mDrawRect.left)/mDrawRect.width();
-                        float percentY = (e.getY()-mDrawRect.top)/mDrawRect.height();
-                        return mDoubleTapListener.onContentDoubleTap(ZoomLayout.this, percentX, percentY);
+                        PointF p = getRelPosition(e, getChildAt(0));
+                        return mDoubleTapListener.onContentDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                     } else {
-                        return mDoubleTapListener.onViewDoubleTap(ZoomLayout.this);
+                        return mDoubleTapListener.onViewDoubleTap(ZoomLayout.this, e.getX(), e.getY());
                     }
                 }
             }
@@ -314,14 +304,20 @@ public class ZoomLayout extends FrameLayout {
             if (!mScaleDetector.isInProgress()) {
                 if (mLongTapListener != null) {
                     if (mDrawRect.contains(e.getX(), e.getY())) {
-                        float percentX = (e.getX()-mDrawRect.left)/mDrawRect.width();
-                        float percentY = (e.getY()-mDrawRect.top)/mDrawRect.height();
-                        mLongTapListener.onContentLongTap(ZoomLayout.this, percentX, percentY);
+                        PointF p = getRelPosition(e, getChildAt(0));
+                        mLongTapListener.onContentLongTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                     } else {
-                        mLongTapListener.onViewLongTap(ZoomLayout.this);
+                        mLongTapListener.onViewLongTap(ZoomLayout.this, e.getX(), e.getY());
                     }
                 }
             }
+        }
+
+        private PointF getRelPosition(MotionEvent e, View v) {
+            mArray[0] = e.getX();
+            mArray[1] = e.getY();
+            screenPointsToScaledPoints(mArray);
+            return new PointF(mArray[0]-v.getLeft(), mArray[1]-v.getTop());
         }
 
         @Override
@@ -356,6 +352,14 @@ public class ZoomLayout extends FrameLayout {
             return false;
         }
 
+        @Override
+        public boolean onDown(MotionEvent e) {
+            requestDisallowInterceptTouchEvent(true);
+            cancelFling();
+            cancelZoom();
+            return false;
+        }
+
         public boolean onUp(MotionEvent e) {
             if (mScrolling) {
                 mPanDispatcher.onPanEnd(ZoomLayout.this);
@@ -367,20 +371,24 @@ public class ZoomLayout extends FrameLayout {
 
     }
 
+    private void fixFocusPoint(float x, float y) {
+        mArray[0] = x;
+        mArray[1] = y;
+        screenPointsToScaledPoints(mArray);
+        // The first scale event translates the content, so we'll counter that translate
+        float x1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
+        float y1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y);
+        internalScale(getScale(), mArray[0], mArray[1]);
+        float dX = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X)-x1;
+        float dY = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y)-y1;
+        moveBy(dX, dY, false);
+    }
+
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
-            mArray[0] = detector.getFocusX();
-            mArray[1] = detector.getFocusY();
-            screenPointsToScaledPoints(mArray);
-            // The first scale event translates the content, so we'll counter that translate
-            float x1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
-            float y1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y);
-            internalScale(getScale(), mArray[0], mArray[1]);
-            float dX = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X)-x1;
-            float dY = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y)-y1;
-            moveBy(dX, dY, false);
+            fixFocusPoint(detector.getFocusX(), detector.getFocusY());
             mZoomDispatcher.onZoomBegin(ZoomLayout.this, getScale());
             return true;
         }
@@ -480,6 +488,9 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public void setScale(float scale, float focusX, float focusY, boolean animate) {
+        fixFocusPoint(focusX, focusY);
+        focusX = mFocusX;
+        focusY = mFocusY;
         if (!mAllowOverScale) {
             scale = NumberUtils.clamp(mMinScale, scale, mMaxScale);
         }
@@ -568,6 +579,8 @@ public class ZoomLayout extends FrameLayout {
         if (child != null) {
             ZoomUtils.setRect(mDrawRect, child.getLeft(), child.getTop(), child.getRight(), child.getBottom());
             scaledPointsToScreenPoints(mDrawRect);
+        } else {
+            ZoomUtils.setRect(mDrawRect, -1f, -1f, -1f, -1f);
         }
         ZoomUtils.setRect(mViewPortRect, 0, 0, getWidth(), getHeight());
     }
@@ -857,18 +870,18 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public interface OnTapListener {
-        boolean onContentTap(ZoomLayout view, float x, float y);
-        boolean onViewTap(ZoomLayout view);
+        boolean onContentTap(ZoomLayout view, float absX, float absY, float relX, float relY);
+        boolean onViewTap(ZoomLayout view, float absX, float absY);
     }
 
     public interface OnDoubleTapListener {
-        boolean onContentDoubleTap(ZoomLayout view, float x, float y);
-        boolean onViewDoubleTap(ZoomLayout view);
+        boolean onContentDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY);
+        boolean onViewDoubleTap(ZoomLayout view, float absX, float absY);
     }
 
     public interface OnLongTapListener {
-        void onContentLongTap(ZoomLayout view, float x, float y);
-        void onViewLongTap(ZoomLayout view);
+        void onContentLongTap(ZoomLayout view, float absX, float absY, float relX, float relY);
+        void onViewLongTap(ZoomLayout view, float absX, float absY);
     }
 
     @Override
@@ -888,11 +901,10 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public void onZoomBegin(ZoomLayout view, float scale) {
-            if (mCount++ > 0) {
-                throw new IllegalStateException("onZoomBegin() called twice without onZoomEnd()");
-            }
-            if (mZoomListener != null) {
-                mZoomListener.onZoomBegin(view, scale);
+            if (mCount++ == 0) {
+                if (mZoomListener != null) {
+                    mZoomListener.onZoomBegin(view, scale);
+                }
             }
         }
 
@@ -905,11 +917,10 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public void onZoomEnd(ZoomLayout view, float scale) {
-            if (mCount-- < 0) {
-                throw new IllegalStateException("onZoomEnd() called twice without onZoomBegin()");
-            }
-            if (mZoomListener != null) {
-                mZoomListener.onZoomEnd(view, scale);
+            if (--mCount == 0) {
+                if (mZoomListener != null) {
+                    mZoomListener.onZoomEnd(view, scale);
+                }
             }
         }
     }
@@ -921,11 +932,10 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public void onPanBegin(ZoomLayout view) {
-            if (mCount++ > 0) {
-                throw new IllegalStateException("onPanBegin() called twice without onPanEnd()");
-            }
-            if (mPanListener != null) {
-                mPanListener.onPanBegin(ZoomLayout.this);
+            if (mCount++ == 0) {
+                if (mPanListener != null) {
+                    mPanListener.onPanBegin(ZoomLayout.this);
+                }
             }
         }
 
@@ -938,11 +948,10 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public void onPanEnd(ZoomLayout view) {
-            if (mCount-- < 0) {
-                throw new IllegalStateException("onPanEnd() called twice without onPanBegin()");
-            }
-            if (mPanListener != null) {
-                mPanListener.onPanEnd(ZoomLayout.this);
+            if (--mCount == 0) {
+                if (mPanListener != null) {
+                    mPanListener.onPanEnd(ZoomLayout.this);
+                }
             }
         }
     }

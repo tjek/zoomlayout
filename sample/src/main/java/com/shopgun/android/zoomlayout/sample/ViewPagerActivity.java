@@ -23,6 +23,7 @@ public class ViewPagerActivity extends AppCompatActivity {
     ViewPager mViewPager;
     TextView mTextView;
     static SimpleZoomPanLog mLogger;
+    static boolean mAllowParentInterceptOnScaled = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -31,6 +32,7 @@ public class ViewPagerActivity extends AppCompatActivity {
         mViewPager = (ViewPager) findViewById(R.id.viewPager);
         mTextView = (TextView) findViewById(R.id.info);
         mLogger = new SimpleZoomPanLog(TAG, mTextView);
+        mAllowParentInterceptOnScaled = true;
         mViewPager.setAdapter(new ZoomLayoutAdapter(getSupportFragmentManager()));
     }
 
@@ -97,6 +99,7 @@ public class ViewPagerActivity extends AppCompatActivity {
             }
 
             ZoomLayout zoomLayout = (ZoomLayout) view.findViewById(R.id.zoomLayout);
+            zoomLayout.setAllowParentInterceptOnScaled(mAllowParentInterceptOnScaled);
             mLogger.setLogger(zoomLayout);
 
             return view;

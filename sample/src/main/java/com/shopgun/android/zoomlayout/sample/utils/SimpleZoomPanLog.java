@@ -81,7 +81,7 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
         if (mTextView != null) {
             mTextView.setText(text);
         }
-//        L.d(mTag, text);
+//        L.d(mTag, text.replace("\n", " - "));
     }
 
     public static final String RECT_FORMAT = "[ %.0f, %.0f, %.0f, %.0f ]";
@@ -90,41 +90,41 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     }
 
     @Override
-    public boolean onContentTap(ZoomLayout view, float posX, float posY) {
-        log("onContentTap", posX, posY);
+    public boolean onContentTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
+        log("onContentTap", absX, absY, relX, relY);
         return false;
     }
 
     @Override
-    public boolean onViewTap(ZoomLayout view) {
-        L.d(TAG, "onViewTap");
+    public boolean onViewTap(ZoomLayout view, float absX, float absY) {
+        log("onViewTap", absX, absY, 0, 0);
         return false;
     }
 
     @Override
-    public boolean onContentDoubleTap(ZoomLayout view, float posX, float posY) {
-        log("onContentDoubleTap", posX, posY);
+    public boolean onContentDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
+        log("onContentDoubleTap", absX, absY, relX, relY);
         return false;
     }
 
     @Override
-    public boolean onViewDoubleTap(ZoomLayout view) {
-        L.d(TAG, "onViewDoubleTap");
+    public boolean onViewDoubleTap(ZoomLayout view, float absX, float absY) {
+        log("onViewDoubleTap", absX, absY, 0, 0);
         return false;
     }
 
     @Override
-    public void onContentLongTap(ZoomLayout view, float posX, float posY) {
-        log("onContentLongTap", posX, posY);
+    public void onContentLongTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
+        log("onContentLongTap", absX, absY, relX, relY);
     }
 
     @Override
-    public void onViewLongTap(ZoomLayout view) {
-        L.d(TAG, "onViewLongTap");
+    public void onViewLongTap(ZoomLayout view, float absX, float absY) {
+        log("onViewLongTap", absX, absY, 0, 0);
     }
 
-    private void log(String msg, float x, float y) {
-        L.d(TAG, String.format(Locale.US, "%s[ x:%.1f, y:%.1f ]", msg, (x*100f), (y*100f)));
+    private void log(String msg, float absX, float absY, float relX, float relY) {
+        L.d(TAG, String.format(Locale.US, "%s[ absX:%.0f, absY:%.0f, relX:%.0f, relY:%.0f ]", msg, absX, absY, relX, relY));
     }
 
 
