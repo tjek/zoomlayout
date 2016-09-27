@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.shopgun.android.zoomlayout.ZoomLayout;
+import com.shopgun.android.zoomlayout.ZoomOnDoubleTapListener;
 import com.shopgun.android.zoomlayout.sample.utils.SimpleZoomPanLog;
 
 public class SingleImageViewActivity extends AppCompatActivity {
@@ -32,6 +33,8 @@ public class SingleImageViewActivity extends AppCompatActivity {
         // setup ZoomLayout
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, mTextView);
         log.setLogger(mZoomLayout);
+
+        mZoomLayout.setOnDoubleTapListener(new ZoomOnDoubleTapListener(mZoomLayout));
 
     }
 
