@@ -274,11 +274,11 @@ public class ZoomLayout extends FrameLayout {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
             if (mTapListener != null) {
+                PointF p = getRelPosition(e, getChildAt(0));
                 if (mDrawRect.contains(e.getX(), e.getY())) {
-                    PointF p = getRelPosition(e, getChildAt(0));
                     return mTapListener.onContentTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                 } else {
-                    return mTapListener.onViewTap(ZoomLayout.this, e.getX(), e.getY());
+                    return mTapListener.onViewTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                 }
             }
             return false;
@@ -288,11 +288,11 @@ public class ZoomLayout extends FrameLayout {
         public boolean onDoubleTapEvent(MotionEvent e) {
             if ((e.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
                 if (mDoubleTapListener != null) {
+                    PointF p = getRelPosition(e, getChildAt(0));
                     if (mDrawRect.contains(e.getX(), e.getY())) {
-                        PointF p = getRelPosition(e, getChildAt(0));
                         return mDoubleTapListener.onContentDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                     } else {
-                        return mDoubleTapListener.onViewDoubleTap(ZoomLayout.this, e.getX(), e.getY());
+                        return mDoubleTapListener.onViewDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                     }
                 }
             }
@@ -303,11 +303,11 @@ public class ZoomLayout extends FrameLayout {
         public void onLongPress(MotionEvent e) {
             if (!mScaleDetector.isInProgress()) {
                 if (mLongTapListener != null) {
+                    PointF p = getRelPosition(e, getChildAt(0));
                     if (mDrawRect.contains(e.getX(), e.getY())) {
-                        PointF p = getRelPosition(e, getChildAt(0));
                         mLongTapListener.onContentLongTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                     } else {
-                        mLongTapListener.onViewLongTap(ZoomLayout.this, e.getX(), e.getY());
+                        mLongTapListener.onViewLongTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
                     }
                 }
             }
@@ -371,9 +371,17 @@ public class ZoomLayout extends FrameLayout {
 
     }
 
-    private void fixFocusPoint(float x, float y) {
-        mArray[0] = x;
-        mArray[1] = y;
+    /**
+     * When setting a new focus point, the translations on scale-matrix will change,
+     * to counter that we'll first read old translation values, then apply the new focus-point
+     * (with the old scale), then read the new translation values. Lastly we'll translate
+     * out translate-matrix by the delta given by the scale-matrix translations.
+     * @param focusX focus-focusX in screen coordinate
+     * @param focusY focus-focusY in screen coordinate
+     */
+    private void fixFocusPoint(float focusX, float focusY) {
+        mArray[0] = focusX;
+        mArray[1] = focusY;
         screenPointsToScaledPoints(mArray);
         // The first scale event translates the content, so we'll counter that translate
         float x1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
@@ -871,17 +879,17 @@ public class ZoomLayout extends FrameLayout {
 
     public interface OnTapListener {
         boolean onContentTap(ZoomLayout view, float absX, float absY, float relX, float relY);
-        boolean onViewTap(ZoomLayout view, float absX, float absY);
+        boolean onViewTap(ZoomLayout view, float absX, float absY, float relX, float relY);
     }
 
     public interface OnDoubleTapListener {
         boolean onContentDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY);
-        boolean onViewDoubleTap(ZoomLayout view, float absX, float absY);
+        boolean onViewDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY);
     }
 
     public interface OnLongTapListener {
         void onContentLongTap(ZoomLayout view, float absX, float absY, float relX, float relY);
-        void onViewLongTap(ZoomLayout view, float absX, float absY);
+        void onViewLongTap(ZoomLayout view, float absX, float absY, float relX, float relY);
     }
 
     @Override

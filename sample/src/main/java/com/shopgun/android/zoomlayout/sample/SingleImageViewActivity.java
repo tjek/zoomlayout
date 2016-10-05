@@ -34,7 +34,7 @@ public class SingleImageViewActivity extends AppCompatActivity {
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, mTextView);
         log.setLogger(mZoomLayout);
 
-        mZoomLayout.setOnDoubleTapListener(new ZoomOnDoubleTapListener(mZoomLayout));
+        mZoomLayout.setOnDoubleTapListener(new ZoomOnDoubleTapListener(true));
 
     }
 

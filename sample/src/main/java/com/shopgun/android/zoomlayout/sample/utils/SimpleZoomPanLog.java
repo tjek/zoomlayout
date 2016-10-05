@@ -96,8 +96,8 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     }
 
     @Override
-    public boolean onViewTap(ZoomLayout view, float absX, float absY) {
-        log("onViewTap", absX, absY, 0, 0);
+    public boolean onViewTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
+        log("onViewTap", absX, absY, relX, relY);
         return false;
     }
 
@@ -108,8 +108,8 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     }
 
     @Override
-    public boolean onViewDoubleTap(ZoomLayout view, float absX, float absY) {
-        log("onViewDoubleTap", absX, absY, 0, 0);
+    public boolean onViewDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
+        log("onViewDoubleTap", absX, absY, relX, relY);
         return false;
     }
 
@@ -119,8 +119,8 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     }
 
     @Override
-    public void onViewLongTap(ZoomLayout view, float absX, float absY) {
-        log("onViewLongTap", absX, absY, 0, 0);
+    public void onViewLongTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
+        log("onViewLongTap", absX, absY, relX, relY);
     }
 
     private void log(String msg, float absX, float absY, float relX, float relY) {
