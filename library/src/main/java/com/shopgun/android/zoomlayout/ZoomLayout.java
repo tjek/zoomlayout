@@ -55,7 +55,7 @@ public class ZoomLayout extends FrameLayout {
     private FlingRunnable mFlingRunnable;
     private AnimatedZoomRunnable mAnimatedZoomRunnable;
     private Interpolator mAnimationInterpolator = new AccelerateDecelerateInterpolator();
-    private int mZoomDuration = 200;
+    private int mZoomDuration = 250;
 
     // allow parent views to intercept any touch events that we do not consume
     boolean mAllowParentInterceptOnEdge = true;
@@ -64,7 +64,7 @@ public class ZoomLayout extends FrameLayout {
     // minimum scale of the content
     private float mMinScale = 1.0f;
     // maximum scale of the content
-    private float mMaxScale = 4.0f;
+    private float mMaxScale = 3.0f;
 
     private ViewTreeObserver.OnGlobalLayoutListener mGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
 
@@ -193,7 +193,7 @@ public class ZoomLayout extends FrameLayout {
 
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
-            log("### MotionEvent.START ###");
+//            log("### MotionEvent.START ###");
         }
         boolean consumed = mScaleDetector.onTouchEvent(ev);
         consumed = mGestureDetector.onTouchEvent(ev) || consumed;
@@ -224,7 +224,7 @@ public class ZoomLayout extends FrameLayout {
 
             }
 
-            log("### MotionEvent.END ###");
+//            log("### MotionEvent.END ###");
         }
 
         return consumed;
@@ -452,6 +452,10 @@ public class ZoomLayout extends FrameLayout {
         return mMaxScale;
     }
 
+    public void setMaxScale(float maxScale) {
+        mMaxScale = maxScale;
+    }
+
     public float getMinScale() {
         return mMinScale;
     }
@@ -643,7 +647,7 @@ public class ZoomLayout extends FrameLayout {
             mFocalY = focalY;
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
-            log(String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
+//            log(String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
             mZoomDispatcher.onZoomBegin(getScale());
             return this;
         }
@@ -705,8 +709,8 @@ public class ZoomLayout extends FrameLayout {
             final int startX = Math.round(mViewPortRect.left);
             final int minX, maxX;
             if (mViewPortRect.width() < mDrawRect.width()) {
-                minX = 0;
-                maxX = Math.round(mDrawRect.right - mViewPortRect.right);
+                minX = Math.round(mDrawRect.left);
+                maxX = Math.round(mDrawRect.width() - mViewPortRect.width());
             } else {
                 minX = maxX = startX;
             }
@@ -714,7 +718,7 @@ public class ZoomLayout extends FrameLayout {
             final int startY = Math.round(mViewPortRect.top);
             final int minY, maxY;
             if (mViewPortRect.height() < mDrawRect.height()) {
-                minY = 0;
+                minY = Math.round(mDrawRect.top);
                 maxY = Math.round(mDrawRect.bottom - mViewPortRect.bottom);
             } else {
                 minY = maxY = startY;
@@ -723,9 +727,9 @@ public class ZoomLayout extends FrameLayout {
             mCurrentX = startX;
             mCurrentY = startY;
 
+//            log(String.format("fling. x[ %s - %s ], y[ %s - %s ]", minX, maxX, minY, maxY));
             // If we actually can move, fling the scroller
             if (startX != maxX || startY != maxY) {
-                log(String.format("fling. StartX:%s StartY:%s MaxX:%s MaxY:%s", startX, startY, maxX, maxY));
                 mScroller.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY, 0, 0);
                 mPanDispatcher.onPanBegin();
             } else {
@@ -757,7 +761,7 @@ public class ZoomLayout extends FrameLayout {
                 final int newX = mScroller.getCurrX();
                 final int newY = mScroller.getCurrY();
 
-                log(String.format("mCurrentX:%s, newX:%s, mCurrentY:%s, newY:%s", mCurrentX, newX, mCurrentY, newY));
+//                log(String.format("mCurrentX:%s, newX:%s, mCurrentY:%s, newY:%s", mCurrentX, newX, mCurrentY, newY));
                 if (internalMoveBy(mCurrentX - newX, mCurrentY - newY, true)) {
                     mPanDispatcher.onPan();
                 }

@@ -28,13 +28,13 @@ public class SingleImageViewActivity extends AppCompatActivity {
         mTextView = (TextView) findViewById(R.id.info);
         mImageView = (ImageView) findViewById(R.id.imageViewSingle);
 
-        mZoomLayout.setMinScale(0.5f);
-
         // setup ZoomLayout
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, mTextView);
         log.setLogger(mZoomLayout);
 
-        mZoomLayout.setOnDoubleTapListener(new ZoomOnDoubleTapListener(true));
+        mZoomLayout.setMinScale(1f);
+        mZoomLayout.setMaxScale(4f);
+        mZoomLayout.setOnDoubleTapListener(new ZoomOnDoubleTapListener(false));
 
     }
 
