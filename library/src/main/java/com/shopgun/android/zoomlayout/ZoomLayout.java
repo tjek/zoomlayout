@@ -193,7 +193,7 @@ public class ZoomLayout extends FrameLayout {
 
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
-            log("### MotionEvent.ACTION_DOWN ###");
+            log("### MotionEvent.START ###");
         }
         boolean consumed = mScaleDetector.onTouchEvent(ev);
         consumed = mGestureDetector.onTouchEvent(ev) || consumed;
@@ -203,65 +203,31 @@ public class ZoomLayout extends FrameLayout {
             // manually call up
             consumed = mGestureListener.onUp(ev) || consumed;
 
-            mAnimatedZoomRunnable = new AnimatedZoomRunnable();
-
-            float newScale = NumberUtils.clamp(mMinScale, getScale(), mMaxScale);
-
-            // Find current bounds before applying scale to do the rest of the calculations
+            float scale = getScale();
+            float newScale = NumberUtils.clamp(mMinScale, scale, mMaxScale);
+            boolean performScale = !NumberUtils.isEqual(scale, newScale);
 
             if (mViewPortRect.height() > mDrawRect.height() &&
                             mViewPortRect.width() > mDrawRect.width()) {
-
-                log("ViewRect can contain DrawRect");
-
-                // The ViewRect does (or can) contain DrawRect
-                // We need to center the DrawRect and ensure the scale bounds
-
-//                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
-//                    mAnimatedZoomRunnable.scale(getScale(), getScale(), getWidth()/2, getHeight()/2);
-//                    mTranslateMatrix.setTranslate(0,0);
-//                    mAnimatedZoomRunnable.translate(getPosX(), getPosY(), 0, 0, true);
+//                log("ViewRect can contain DrawRect - translate and scale");
 
             } else if (!mDrawRect.contains(mViewPortRect)) {
-
-                log("ViewRect in on an edge of DrawRect");
-
-//                    mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
-                // TODO handle this case nicely - not just re-center
-//                    mAnimatedZoomRunnable.translateIfNeeded(getPosX(), getPosY(), 0, 0);
-
-                if (mViewPortRect.left > mDrawRect.left) {
-                    log("left");
-                }
-
-                if (mViewPortRect.right > mDrawRect.right) {
-                    log("right");
-                }
-
-                if (mViewPortRect.top < mDrawRect.top) {
-                    log("top");
-                }
-
-                if (mViewPortRect.bottom < mDrawRect.bottom) {
-                    log("bottom");
-                }
+//                log("ViewRect in on an edge of DrawRect - translate");
 
             } else {
-
-                log("ViewRect is inside DrawRect");
-
-                // The ViewPort is inside the DrawRect - no problem
-                mAnimatedZoomRunnable.scaleIfNeeded(getScale(), newScale, mFocusX, mFocusY);
+//                log("DrawRect contains ViewRect - scale");
 
             }
 
-            if (mAnimatedZoomRunnable.scale() || mAnimatedZoomRunnable.translate()) {
+            if (performScale) {
+                mAnimatedZoomRunnable = new AnimatedZoomRunnable();
+                mAnimatedZoomRunnable.scale(scale, newScale, mFocusX, mFocusY);
                 ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
                 consumed = true;
             } else {
                 cancelZoom();
             }
-            log("### MotionEvent.ACTION_UP ###");
+            log("### MotionEvent.END ###");
         }
 
         return consumed;
@@ -332,10 +298,15 @@ public class ZoomLayout extends FrameLayout {
             if (e2.getPointerCount() == 1 && !mScaleDetector.isInProgress()) {
                 // only drag if we have one pointer and aren't already scaling
                 if (!mScrolling) {
-                    mPanDispatcher.onPanBegin(ZoomLayout.this);
+                    mPanDispatcher.onPanBegin();
                     mScrolling = true;
                 }
-                consumed = moveBy(distanceX, distanceY);
+                consumed = internalMoveBy(distanceX, distanceY, true);
+//                PointF p = ensureTranslationBounds();
+//                internalMove(p.x, p.y, false);
+                if (consumed) {
+                    mPanDispatcher.onPan();
+                }
                 if (mAllowParentInterceptOnEdge && !consumed && (!isScaled() || mAllowParentInterceptOnScaled)) {
                     requestDisallowInterceptTouchEvent(false);
                 }
@@ -359,6 +330,11 @@ public class ZoomLayout extends FrameLayout {
         }
 
         @Override
+        public void onShowPress(MotionEvent e) {
+            super.onShowPress(e);
+        }
+
+        @Override
         public boolean onDown(MotionEvent e) {
             requestDisallowInterceptTouchEvent(true);
             cancelFling();
@@ -366,9 +342,9 @@ public class ZoomLayout extends FrameLayout {
             return false;
         }
 
-        public boolean onUp(MotionEvent e) {
+        boolean onUp(MotionEvent e) {
             if (mScrolling) {
-                mPanDispatcher.onPanEnd(ZoomLayout.this);
+                mPanDispatcher.onPanEnd();
                 mScrolling = false;
                 return true;
             }
@@ -395,15 +371,15 @@ public class ZoomLayout extends FrameLayout {
         internalScale(getScale(), mArray[0], mArray[1]);
         float dX = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X)-x1;
         float dY = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y)-y1;
-        moveBy(dX, dY, false);
+        internalMove(dX + getPosX(), dY + getPosY(), false);
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
+            mZoomDispatcher.onZoomBegin(getScale());
             fixFocusPoint(detector.getFocusX(), detector.getFocusY());
-            mZoomDispatcher.onZoomBegin(ZoomLayout.this, getScale());
             return true;
         }
 
@@ -411,12 +387,14 @@ public class ZoomLayout extends FrameLayout {
         public boolean onScale(ScaleGestureDetector detector) {
             float scale = getScale() * detector.getScaleFactor();
             internalScale(scale, mFocusX, mFocusY);
+            mZoomDispatcher.onZoom(scale);
             return true;
         }
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
-            mZoomDispatcher.onZoomEnd(ZoomLayout.this, getScale());
+            ensureTranslationBounds();
+            mZoomDispatcher.onZoomEnd(getScale());
         }
     }
 
@@ -513,35 +491,24 @@ public class ZoomLayout extends FrameLayout {
             mAnimatedZoomRunnable.scale(getScale(), scale, focusX, focusY);
             ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
         } else {
+            mZoomDispatcher.onZoomBegin(getScale());
             internalScale(scale, focusX, focusY);
+            mZoomDispatcher.onZoom(scale);
+            mZoomDispatcher.onZoomEnd(scale);
         }
     }
 
     public boolean moveBy(float dX, float dY) {
-//        log(String.format(Locale.US, "moveBy[ %.2f, %.2f ]", dX, dY));
-        return moveBy(dX, dY, true);
+        return moveTo(dX + getPosX(), dY + getPosY());
     }
 
     public boolean moveTo(float posX, float posY) {
-        return moveTo(posX, posY, false);
-    }
-
-    private boolean moveBy(float dX, float dY, boolean clamp) {
-//        log(String.format(Locale.US, "moveBy[ %.2f, %.2f ]", dX, dY));
-        return moveTo(dX + getPosX(), dY + getPosY(), clamp);
-    }
-
-    private boolean moveTo(float posX, float posY, boolean clamp) {
-        if (clamp) {
-            RectF bounds = getTranslateBounds();
-            if (bounds.isEmpty()) {
-                return false;
-            }
-//        log(String.format(Locale.US, "move x[ %.1f -> %.1f ], y[ %.1f -> %.1f ], bounds: %s", getPosX(), posX, getPosY(), posY, bounds.toString()));
-            posX = NumberUtils.clamp(bounds.left, posX, bounds.right);
-            posY = NumberUtils.clamp(bounds.top, posY, bounds.bottom);
+        mPanDispatcher.onPanBegin();
+        if (internalMove(posX, posY, true)) {
+            mPanDispatcher.onPan();
         }
-        return internalMove(posX, posY);
+        mPanDispatcher.onPanEnd();
+        return true;
     }
 
     /**
@@ -558,16 +525,54 @@ public class ZoomLayout extends FrameLayout {
         return r;
     }
 
-    private boolean internalMove(float posX, float posY) {
+    private boolean internalMoveBy(float dX, float dY, boolean clamp) {
+        return internalMove(dX + getPosX(), dY + getPosY(), clamp);
+    }
+
+    private boolean internalMove(float posX, float posY, boolean clamp) {
+        if (clamp) {
+            RectF r = getTranslateBounds();
+            if (r.isEmpty()) {
+                return false;
+            }
+            posX = NumberUtils.clamp(r.left, posX, r.right);
+            posY = NumberUtils.clamp(r.top, posY, r.bottom);
+        }
         if (!NumberUtils.isEqual(posX, getPosX()) ||
                 !NumberUtils.isEqual(posY, getPosY())) {
             mTranslateMatrix.setTranslate(-posX, -posY);
             matrixUpdated();
-            mPanDispatcher.onPan(ZoomLayout.this);
             invalidate();
             return true;
         }
         return false;
+    }
+
+    private void ensureTranslationBounds() {
+        float x = getPosX();
+        float y = getPosY();
+        PointF p = new PointF(x, y);
+        if (mDrawRect.width() < mViewPortRect.width()) {
+            p.x += mDrawRect.centerX() - mViewPortRect.centerX();
+        } else if (mDrawRect.right < mViewPortRect.right) {
+            p.x += mDrawRect.right - mViewPortRect.right;
+        } else if (mDrawRect.left > mViewPortRect.left) {
+            p.x += mDrawRect.left - mViewPortRect.left;
+        }
+
+        if (mDrawRect.height() < mViewPortRect.height()) {
+            p.y += mDrawRect.centerY() - mViewPortRect.centerY();
+        } else if (mDrawRect.bottom < mViewPortRect.bottom) {
+            p.y += mDrawRect.bottom - mViewPortRect.bottom;
+        } else if (mDrawRect.top > mViewPortRect.top) {
+            p.y += mDrawRect.top - mViewPortRect.top;
+        }
+
+        if (!NumberUtils.isEqual(p.x, x) || NumberUtils.isEqual(p.y, y)) {
+//            L.d(TAG, String.format(Locale.US, "ensureTranslationBounds x[ %.0f -> %.0f ], y[ %.0f -> %.0f ] ", x, p.x, y, p.y));
+            internalMove(p.x, p.y, false);
+        }
+
     }
 
     private void internalScale(float scale, float focusX, float focusY) {
@@ -575,7 +580,6 @@ public class ZoomLayout extends FrameLayout {
         mFocusY = focusY;
         mScaleMatrix.setScale(scale, scale, mFocusX, mFocusY);
         matrixUpdated();
-        mZoomDispatcher.onZoom(ZoomLayout.this, scale);
         invalidate();
         requestLayout();
     }
@@ -601,7 +605,6 @@ public class ZoomLayout extends FrameLayout {
 
     /**
      * Get the current x-translation
-     * @return
      */
     public float getPosX() {
         return -getMatrixValue(mTranslateMatrix, Matrix.MTRANS_X);
@@ -609,7 +612,6 @@ public class ZoomLayout extends FrameLayout {
 
     /**
      * Get the current y-translation
-     * @return
      */
     public float getPosY() {
         return -getMatrixValue(mTranslateMatrix, Matrix.MTRANS_Y);
@@ -628,8 +630,6 @@ public class ZoomLayout extends FrameLayout {
 
     private class AnimatedZoomRunnable implements Runnable {
 
-        boolean mPerformScale = false;
-        boolean mPerformTranslate = false;
         boolean mCancelled = false;
         boolean mFinished = false;
 
@@ -641,59 +641,14 @@ public class ZoomLayout extends FrameLayout {
             mStartTime = System.currentTimeMillis();
         }
 
-        AnimatedZoomRunnable scaleIfNeeded(float currentZoom, float targetZoom, float focalX, float focalY) {
-            if (performScale(currentZoom, targetZoom, focalX, focalY)) {
-                scale(currentZoom, targetZoom, focalX, focalY);
-            }
-            return this;
-        }
-
-        boolean performScale(float currentZoom, float targetZoom, float focalX, float focalY) {
-            return !NumberUtils.isEqual(currentZoom, targetZoom) ||
-                    !NumberUtils.isEqual(focalX, ZoomLayout.this.mFocusX) ||
-                    !NumberUtils.isEqual(focalY, ZoomLayout.this.mFocusY);
-        }
-
         AnimatedZoomRunnable scale(float currentZoom, float targetZoom, float focalX, float focalY) {
-            mPerformScale = true;
             mFocalX = focalX;
             mFocalY = focalY;
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
             log(String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
-            mZoomDispatcher.onZoomBegin(ZoomLayout.this, getScale());
+            mZoomDispatcher.onZoomBegin(getScale());
             return this;
-        }
-
-        boolean scale() {
-            return mPerformScale;
-        }
-
-        AnimatedZoomRunnable translateIfNeeded(float currentX, float currentY, float targetX, float targetY) {
-            if (performTranslate(currentX, currentY, targetX, targetY)) {
-                translate(currentX, currentY, targetX, targetY);
-            }
-            return this;
-        }
-
-        boolean performTranslate(float currentX, float currentY, float targetX, float targetY) {
-            return !NumberUtils.isEqual(currentX, targetX) ||
-                    !NumberUtils.isEqual(currentY, targetY);
-        }
-
-        AnimatedZoomRunnable translate(float currentX, float currentY, float targetX, float targetY) {
-            mPerformTranslate = true;
-            mXStart = currentX;
-            mYStart = currentY;
-            mXEnd = targetX;
-            mYEnd = targetY;
-            log(String.format("AnimatedZoomRunnable.Translate: x[%s -> %s], y[%s -> %s]", mXStart, mXEnd, mYStart, mYEnd));
-            mPanDispatcher.onPanBegin(ZoomLayout.this);
-            return this;
-        }
-
-        boolean translate() {
-            return mPerformTranslate;
         }
 
         void cancel() {
@@ -703,12 +658,7 @@ public class ZoomLayout extends FrameLayout {
 
         private void finish() {
             if (!mFinished) {
-                if (mPerformScale) {
-                    mZoomDispatcher.onZoomEnd(ZoomLayout.this, getScale());
-                }
-                if (mPerformTranslate) {
-                    mPanDispatcher.onPanEnd(ZoomLayout.this);
-                }
+                mZoomDispatcher.onZoomEnd(getScale());
             }
             mFinished = true;
         }
@@ -716,22 +666,16 @@ public class ZoomLayout extends FrameLayout {
         @Override
         public void run() {
 
-            if (mCancelled || (!mPerformScale && !mPerformTranslate)) {
+            if (mCancelled) {
                 return;
             }
 
             float t = interpolate();
 
-            if (mPerformScale) {
-                float newScale = mZoomStart + t * (mZoomEnd - mZoomStart);
-                internalScale(newScale, mFocalX, mFocalY);
-            }
-
-            if (mPerformTranslate) {
-                float x = mXStart + t * (mXEnd - mXStart);
-                float y = mYStart + t * (mYEnd - mYStart);
-                internalMove(x, y);
-            }
+            float newScale = mZoomStart + t * (mZoomEnd - mZoomStart);
+            internalScale(newScale, mFocalX, mFocalY);
+            ensureTranslationBounds();
+            mZoomDispatcher.onZoom(newScale);
 
             // We haven't hit our target scale yet, so post ourselves again
             if (t < 1f) {
@@ -765,7 +709,7 @@ public class ZoomLayout extends FrameLayout {
             final int minX, maxX;
             if (mViewPortRect.width() < mDrawRect.width()) {
                 minX = 0;
-                maxX = Math.round(mDrawRect.width() - mViewPortRect.width());
+                maxX = Math.round(mDrawRect.right - mViewPortRect.right);
             } else {
                 minX = maxX = startX;
             }
@@ -774,7 +718,7 @@ public class ZoomLayout extends FrameLayout {
             final int minY, maxY;
             if (mViewPortRect.height() < mDrawRect.height()) {
                 minY = 0;
-                maxY = Math.round(mDrawRect.height() - mViewPortRect.height());
+                maxY = Math.round(mDrawRect.bottom - mViewPortRect.bottom);
             } else {
                 minY = maxY = startY;
             }
@@ -782,12 +726,11 @@ public class ZoomLayout extends FrameLayout {
             mCurrentX = startX;
             mCurrentY = startY;
 
-            log(String.format("fling. StartX:%s StartY:%s MaxX:%s MaxY:%s doScroll:%s", startX, startY, maxX, maxY, (startX != maxX || startY != maxY)));
-
             // If we actually can move, fling the scroller
             if (startX != maxX || startY != maxY) {
+                log(String.format("fling. StartX:%s StartY:%s MaxX:%s MaxY:%s", startX, startY, maxX, maxY));
                 mScroller.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY, 0, 0);
-                mPanDispatcher.onPanBegin(ZoomLayout.this);
+                mPanDispatcher.onPanBegin();
             } else {
                 mFinished = true;
             }
@@ -801,7 +744,7 @@ public class ZoomLayout extends FrameLayout {
 
         private void finish() {
             if (!mFinished) {
-                mPanDispatcher.onPanEnd(ZoomLayout.this);
+                mPanDispatcher.onPanEnd();
             }
             mFinished = true;
         }
@@ -817,8 +760,10 @@ public class ZoomLayout extends FrameLayout {
                 final int newX = mScroller.getCurrX();
                 final int newY = mScroller.getCurrY();
 
-//                log(String.format("mCurrentX:%s, newX:%s, mCurrentY:%s, newY:%s", mCurrentX, newX, mCurrentY, newY));
-                moveBy(mCurrentX - newX, mCurrentY - newY);
+                log(String.format("mCurrentX:%s, newX:%s, mCurrentY:%s, newY:%s", mCurrentX, newX, mCurrentY, newY));
+                if (internalMoveBy(mCurrentX - newX, mCurrentY - newY, true)) {
+                    mPanDispatcher.onPan();
+                }
 
                 mCurrentX = newX;
                 mCurrentY = newY;
@@ -900,52 +845,53 @@ public class ZoomLayout extends FrameLayout {
 
     @Override
     public void setOnClickListener(OnClickListener l) {
-        throw new IllegalStateException("Cannot set OnClickListener, please use OnTapListener");
+        throw new IllegalStateException("Cannot set OnClickListener, please use OnTapListener.");
     }
 
     @Override
     public void setOnLongClickListener(OnLongClickListener l) {
-        throw new IllegalStateException("Cannot set OnLongClickListener, please use OnLongTabListener");
+        throw new IllegalStateException("Cannot set OnLongClickListener, please use OnLongTabListener.");
     }
 
-    private class ZoomDispatcher implements OnZoomListener {
+    @Override
+    public void setOnTouchListener(OnTouchListener l) {
+        throw new IllegalStateException("Cannot set OnTouchListener.");
+    }
+
+    private class ZoomDispatcher {
 
         int mCount = 0;
         OnZoomListener mZoomListener;
 
-        @Override
-        public void onZoomBegin(ZoomLayout view, float scale) {
+        void onZoomBegin(float scale) {
             if (mCount++ == 0) {
                 if (mZoomListener != null) {
-                    mZoomListener.onZoomBegin(view, scale);
+                    mZoomListener.onZoomBegin(ZoomLayout.this, scale);
                 }
             }
         }
 
-        @Override
-        public void onZoom(ZoomLayout view, float scale) {
+        void onZoom(float scale) {
             if (mZoomListener != null) {
-                mZoomListener.onZoom(view, scale);
+                mZoomListener.onZoom(ZoomLayout.this, scale);
             }
         }
 
-        @Override
-        public void onZoomEnd(ZoomLayout view, float scale) {
+        void onZoomEnd(float scale) {
             if (--mCount == 0) {
                 if (mZoomListener != null) {
-                    mZoomListener.onZoomEnd(view, scale);
+                    mZoomListener.onZoomEnd(ZoomLayout.this, scale);
                 }
             }
         }
     }
 
-    private class PanDispatcher implements OnPanListener {
+    private class PanDispatcher {
 
         int mCount = 0;
         OnPanListener mPanListener;
 
-        @Override
-        public void onPanBegin(ZoomLayout view) {
+        void onPanBegin() {
             if (mCount++ == 0) {
                 if (mPanListener != null) {
                     mPanListener.onPanBegin(ZoomLayout.this);
@@ -953,15 +899,13 @@ public class ZoomLayout extends FrameLayout {
             }
         }
 
-        @Override
-        public void onPan(ZoomLayout view) {
+        void onPan() {
             if (mPanListener != null) {
                 mPanListener.onPan(ZoomLayout.this);
             }
         }
 
-        @Override
-        public void onPanEnd(ZoomLayout view) {
+        void onPanEnd() {
             if (--mCount == 0) {
                 if (mPanListener != null) {
                     mPanListener.onPanEnd(ZoomLayout.this);

@@ -21,7 +21,7 @@ public class ZoomUtils {
     private static final String MATRIX_BACIS_FORMAT = "[ scale:%.2f, x:%.0f, y:%.0f ]";
     private static final String MATRIX_FORMAT = "[ %.2f, %.2f, %.2f ][ %.2f, %.2f, %.2f ][ %.2f, %.2f, %.2f ]";
     private static final float[] v = new float[9];
-    private static final String RECT_FORMAT = "%s: %s [ %.0f, %.0f, %.0f, %.0f ], w:%s, h%s";
+    private static final String RECT_FORMAT = "%s: %s [ %.0f, %.0f, %.0f, %.0f ], w:%s, h:%s";
 
     public static String getMatrixBasicInfo(Matrix m) {
         m.getValues(v);
