@@ -205,7 +205,12 @@ public class ZoomLayout extends FrameLayout {
 
             float scale = getScale();
             float newScale = NumberUtils.clamp(mMinScale, scale, mMaxScale);
-            boolean performScale = !NumberUtils.isEqual(scale, newScale);
+            if (!NumberUtils.isEqual(scale, newScale)) {
+                mAnimatedZoomRunnable = new AnimatedZoomRunnable();
+                mAnimatedZoomRunnable.scale(scale, newScale, mFocusX, mFocusY);
+                ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
+                consumed = true;
+            }
 
             if (mViewPortRect.height() > mDrawRect.height() &&
                             mViewPortRect.width() > mDrawRect.width()) {
@@ -219,14 +224,6 @@ public class ZoomLayout extends FrameLayout {
 
             }
 
-            if (performScale) {
-                mAnimatedZoomRunnable = new AnimatedZoomRunnable();
-                mAnimatedZoomRunnable.scale(scale, newScale, mFocusX, mFocusY);
-                ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
-                consumed = true;
-            } else {
-                cancelZoom();
-            }
             log("### MotionEvent.END ###");
         }
 
