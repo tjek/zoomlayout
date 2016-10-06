@@ -269,6 +269,7 @@ public class ZoomLayout extends FrameLayout {
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
+        private float mScaleOnActionDown;
         private boolean mScrolling = false;
 
         @Override
@@ -286,15 +287,20 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onDoubleTapEvent(MotionEvent e) {
-            if ((e.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
-                if (mDoubleTapListener != null) {
-                    PointF p = getRelPosition(e, getChildAt(0));
-                    if (mDrawRect.contains(e.getX(), e.getY())) {
-                        return mDoubleTapListener.onContentDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
-                    } else {
-                        return mDoubleTapListener.onViewDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
+            switch (e.getAction() & MotionEvent.ACTION_MASK) {
+                case MotionEvent.ACTION_DOWN:
+                    mScaleOnActionDown = getScale();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (mDoubleTapListener != null && NumberUtils.isEqual(getScale(), mScaleOnActionDown)) {
+                        PointF p = getRelPosition(e, getChildAt(0));
+                        if (mDrawRect.contains(e.getX(), e.getY())) {
+                            return mDoubleTapListener.onContentDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
+                        } else {
+                            return mDoubleTapListener.onViewDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
+                        }
                     }
-                }
+                    break;
             }
             return false;
         }
