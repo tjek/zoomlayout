@@ -66,6 +66,8 @@ public class ZoomLayout extends FrameLayout {
     // maximum scale of the content
     private float mMaxScale = 3.0f;
 
+    private boolean mAllowZoom = true;
+
     private ViewTreeObserver.OnGlobalLayoutListener mGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
 
         private int mLeft, mTop, mRight, mBottom;
@@ -375,23 +377,29 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
-            mZoomDispatcher.onZoomBegin(getScale());
-            fixFocusPoint(detector.getFocusX(), detector.getFocusY());
+            if (mAllowZoom) {
+                mZoomDispatcher.onZoomBegin(getScale());
+                fixFocusPoint(detector.getFocusX(), detector.getFocusY());
+            }
             return true;
         }
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             float scale = getScale() * detector.getScaleFactor();
-            internalScale(scale, mFocusX, mFocusY);
-            mZoomDispatcher.onZoom(scale);
+            if (mAllowZoom) {
+                internalScale(scale, mFocusX, mFocusY);
+                mZoomDispatcher.onZoom(scale);
+            }
             return true;
         }
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
-            ensureTranslationBounds();
-            mZoomDispatcher.onZoomEnd(getScale());
+            if (mAllowZoom) {
+                ensureTranslationBounds();
+                mZoomDispatcher.onZoomEnd(getScale());
+            }
         }
     }
 
@@ -464,6 +472,14 @@ public class ZoomLayout extends FrameLayout {
         mMinScale = minScale;
     }
 
+    public boolean isAllowZoom() {
+        return mAllowZoom;
+    }
+
+    public void setAllowZoom(boolean allowZoom) {
+        mAllowZoom = allowZoom;
+    }
+
     public float getScale() {
         return getMatrixValue(mScaleMatrix, Matrix.MSCALE_X);
     }
@@ -481,6 +497,9 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public void setScale(float scale, float focusX, float focusY, boolean animate) {
+        if (!mAllowZoom) {
+            return;
+        }
         fixFocusPoint(focusX, focusY);
         focusX = mFocusX;
         focusY = mFocusY;
