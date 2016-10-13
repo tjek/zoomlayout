@@ -31,7 +31,7 @@ public class ZoomOnDoubleTapListener implements ZoomLayout.OnDoubleTapListener {
         if (view.getScale() < view.getMaxScale()) {
             view.setScale(view.getMaxScale(), x, y, true);
         } else {
-            view.setScale(view.getMinScale(), x, y, true);
+            view.setScale(view.getMinScale(), true);
         }
     }
 
@@ -43,7 +43,7 @@ public class ZoomOnDoubleTapListener implements ZoomLayout.OnDoubleTapListener {
         } else if (scale >= medium && scale < view.getMaxScale()) {
             view.setScale(view.getMaxScale(), x, y, true);
         } else {
-            view.setScale(view.getMinScale(), x, y, true);
+            view.setScale(view.getMinScale(), true);
         }
     }
 
