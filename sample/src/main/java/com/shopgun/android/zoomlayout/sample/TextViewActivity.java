@@ -23,6 +23,8 @@ public class TextViewActivity extends AppCompatActivity {
 
         mZoomLayout = (ZoomLayout) findViewById(R.id.zoomLayout);
         mTextView = (TextView) findViewById(R.id.info);
+        TextView mTv = (TextView) findViewById(R.id.textView);
+//        mTv.setText("x\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\n");
 
         // setup ZoomLayout
         SimpleZoomPanLog log = new SimpleZoomPanLog(TAG, mTextView);

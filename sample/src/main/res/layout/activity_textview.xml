@@ -17,6 +17,7 @@
         android:layout_height="match_parent">
 
         <TextView
+            android:id="@+id/textView"
             android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
             android:text="Hello, ZoomLayout!"
             android:layout_gravity="center"
