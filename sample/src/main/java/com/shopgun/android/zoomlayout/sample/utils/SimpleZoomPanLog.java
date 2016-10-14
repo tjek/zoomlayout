@@ -25,7 +25,7 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     public SimpleZoomPanLog(String tag, TextView textView) {
         mTag = tag;
         mTextView = textView;
-        log("init", 1.0f, 0f, 0f, "none", "none");
+        log("init", 1.0f, 0f, 0f, "none");
     }
 
     public void setLogger(ZoomLayout zoomLayout) {
@@ -69,15 +69,14 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
 
     public static final String FORMAT =
             "%s - s:%.2f, x:%.0f, y:%.0f\n" +
-            "Rect %s\n" +
             "DrawRect %s";
 
     private void log(String msg, ZoomLayout view) {
-        log(msg, view.getScale(), view.getPosX(), view.getPosY(), r(view.getTranslateBounds()), r(view.getDrawRect()));
+        log(msg, view.getScale(), view.getPosX(), view.getPosY(), r(view.getDrawRect()));
     }
 
-    private void log(String msg, float scale, float x, float y, String bounds, String drawRect) {
-        String text = String.format(Locale.US, FORMAT, msg, scale, x, y, bounds, drawRect);
+    private void log(String msg, float scale, float x, float y, String drawRect) {
+        String text = String.format(Locale.US, FORMAT, msg, scale, x, y, drawRect);
         if (mTextView != null) {
             mTextView.setText(text);
         }

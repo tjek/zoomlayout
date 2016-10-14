@@ -21,13 +21,12 @@ import android.widget.FrameLayout;
 import com.shopgun.android.utils.NumberUtils;
 import com.shopgun.android.utils.log.L;
 
-import java.util.Locale;
-
 @SuppressWarnings("unused")
 public class ZoomLayout extends FrameLayout {
 
     public static final String TAG = ZoomLayout.class.getSimpleName();
 
+    private static final int DEF_ZOOM_DURATION = 250;
     public boolean DEBUG = false;
 
     private ScaleGestureDetector mScaleDetector;
@@ -56,7 +55,7 @@ public class ZoomLayout extends FrameLayout {
     private FlingRunnable mFlingRunnable;
     private AnimatedZoomRunnable mAnimatedZoomRunnable;
     private Interpolator mAnimationInterpolator = new AccelerateDecelerateInterpolator();
-    private int mZoomDuration = 250;
+    private int mZoomDuration = DEF_ZOOM_DURATION;
 
     // allow parent views to intercept any touch events that we do not consume
     boolean mAllowParentInterceptOnEdge = true;
@@ -270,8 +269,6 @@ public class ZoomLayout extends FrameLayout {
                     mScrolling = true;
                 }
                 consumed = internalMoveBy(distanceX, distanceY, true);
-//                PointF p = ensureTranslationBounds();
-//                internalMove(p.x, p.y, false);
                 if (consumed) {
                     mPanDispatcher.onPan();
                 }
@@ -284,15 +281,14 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            if (mDrawRect.contains(mViewPortRect)) {
-                float newScale = NumberUtils.clamp(mMinScale, getScale(), mMaxScale);
-                if (NumberUtils.isEqual(newScale, getScale())) {
-                    // only fling if no scale is needed - scale will happen on ACTION_UP
-                    mFlingRunnable = new FlingRunnable(getContext());
-                    mFlingRunnable.fling((int) velocityX, (int) velocityY);
-                    ViewCompat.postOnAnimation(ZoomLayout.this, mFlingRunnable);
-                    return true;
-                }
+            float scale = getScale();
+            float newScale = NumberUtils.clamp(mMinScale, scale, mMaxScale);
+            if (NumberUtils.isEqual(newScale, scale)) {
+                // only fling if no scale is needed - scale will happen on ACTION_UP
+                mFlingRunnable = new FlingRunnable(getContext());
+                mFlingRunnable.fling((int) velocityX, (int) velocityY);
+                ViewCompat.postOnAnimation(ZoomLayout.this, mFlingRunnable);
+                return true;
             }
             return false;
         }
@@ -318,12 +314,10 @@ public class ZoomLayout extends FrameLayout {
                 mScrolling = false;
                 consumed = true;
             }
-
             if (mAnimatedZoomRunnable == null || mAnimatedZoomRunnable.mFinished) {
                 mAnimatedZoomRunnable = new AnimatedZoomRunnable();
-                consumed = mAnimatedZoomRunnable.validate() || consumed;
+                consumed = mAnimatedZoomRunnable.runValidation() || consumed;
             }
-
             return consumed;
         }
 
@@ -338,21 +332,13 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            float scale = getScale() * detector.getScaleFactor();
             if (mAllowZoom) {
-
+                float scale = getScale() * detector.getScaleFactor();
                 float scaleFactor = detector.getScaleFactor();
-
                 if (Float.isNaN(scaleFactor) || Float.isInfinite(scaleFactor))
                     return false;
 
-                final float x1 = getPosX(), y1 = getPosY();
-                mScaleMatrix.setScale(scale, scale, mFocusX, mFocusY);
-                float dX = getPosX()-(x1);
-                float dY = getPosY()-(y1);
-                mScaleMatrix.postTranslate(-dX, -dY);
-                matrixUpdated();
-                requestLayout();
+                internalScale(scale, mFocusX, mFocusY);
                 mZoomDispatcher.onZoom(scale);
             }
             return true;
@@ -362,7 +348,7 @@ public class ZoomLayout extends FrameLayout {
         public void onScaleEnd(ScaleGestureDetector detector) {
             if (mAllowZoom) {
                 mAnimatedZoomRunnable = new AnimatedZoomRunnable();
-                mAnimatedZoomRunnable.validate();
+                mAnimatedZoomRunnable.runValidation();
                 mZoomDispatcher.onZoomEnd(getScale());
             }
         }
@@ -371,8 +357,8 @@ public class ZoomLayout extends FrameLayout {
     /**
      * When setting a new focus point, the translations on scale-matrix will change,
      * to counter that we'll first read old translation values, then apply the new focus-point
-     * (with the old scale), then read the new translation values. Lastly we'll translate
-     * out translate-matrix by the delta given by the scale-matrix translations.
+     * (with the old scale), then read the new translation values. Lastly we'll ensureTranslation
+     * out ensureTranslation-matrix by the delta given by the scale-matrix translations.
      * @param focusX focus-focusX in screen coordinate
      * @param focusY focus-focusY in screen coordinate
      */
@@ -380,7 +366,7 @@ public class ZoomLayout extends FrameLayout {
         mArray[0] = focusX;
         mArray[1] = focusY;
         screenPointsToScaledPoints(mArray);
-        // The first scale event translates the content, so we'll counter that translate
+        // The first scale event translates the content, so we'll counter that ensureTranslation
         float x1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
         float y1 = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y);
         internalScale(getScale(), mArray[0], mArray[1]);
@@ -439,7 +425,7 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public void setZoomDuration(int zoomDuration) {
-        mZoomDuration = zoomDuration;
+        mZoomDuration = zoomDuration < 0 ? DEF_ZOOM_DURATION : zoomDuration;
     }
 
     public float getMaxScale() {
@@ -448,6 +434,9 @@ public class ZoomLayout extends FrameLayout {
 
     public void setMaxScale(float maxScale) {
         mMaxScale = maxScale;
+        if (mMaxScale < mMinScale) {
+            setMinScale(maxScale);
+        }
     }
 
     public float getMinScale() {
@@ -456,6 +445,9 @@ public class ZoomLayout extends FrameLayout {
 
     public void setMinScale(float minScale) {
         mMinScale = minScale;
+        if (mMinScale > mMaxScale) {
+            setMaxScale(mMinScale);
+        }
     }
 
     public boolean isAllowZoom() {
@@ -488,19 +480,16 @@ public class ZoomLayout extends FrameLayout {
             return;
         }
         fixFocusPoint(focusX, focusY);
-        focusX = mFocusX;
-        focusY = mFocusY;
         if (!mAllowOverScale) {
             scale = NumberUtils.clamp(mMinScale, scale, mMaxScale);
         }
         if (animate) {
             mAnimatedZoomRunnable = new AnimatedZoomRunnable();
-            mAnimatedZoomRunnable.scale(getScale(), scale, focusX, focusY);
-            mAnimatedZoomRunnable.translate();
+            mAnimatedZoomRunnable.scale(getScale(), scale, mFocusX, mFocusY, true);
             ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
         } else {
             mZoomDispatcher.onZoomBegin(getScale());
-            internalScale(scale, focusX, focusY);
+            internalScale(scale, mFocusX, mFocusY);
             mZoomDispatcher.onZoom(scale);
             mZoomDispatcher.onZoomEnd(scale);
         }
@@ -519,33 +508,17 @@ public class ZoomLayout extends FrameLayout {
         return true;
     }
 
-    /**
-     * Get the bounds that x and y coordinates must stay within when translating the view
-     * if we want to ensure that the ViewPort stays inside the DrawRect.
-     * @return A rect
-     */
-    public RectF getTranslateBounds() {
-        RectF r = new RectF();
-        r.left = getMatrixValue(mScaleMatrix, Matrix.MTRANS_X);
-        r.top = getMatrixValue(mScaleMatrix, Matrix.MTRANS_Y);
-        r.right = (mDrawRect.width() - getWidth()) - Math.abs(r.left);
-        r.bottom = (mDrawRect.height() - getHeight()) - Math.abs(r.top);
-        return r;
-    }
-
-    private boolean internalMoveBy(float dX, float dY, boolean clamp) {
-        return internalMove(dX + getPosX(), dY + getPosY(), clamp);
-    }
-
-    private boolean internalMove(float posX, float posY, boolean clamp) {
+    private boolean internalMoveBy(float dx, float dy, boolean clamp) {
+        float tdx = dx;
+        float tdy = dy;
         if (clamp) {
-            RectF r = getTranslateBounds();
-            if (r.isEmpty()) {
-                return false;
-            }
-            posX = NumberUtils.clamp(r.left, posX, r.right);
-            posY = NumberUtils.clamp(r.top, posY, r.bottom);
+            RectF bounds = getTranslateDeltaBounds();
+            tdx = NumberUtils.clamp(bounds.left, dx, bounds.right);
+            tdy = NumberUtils.clamp(bounds.top, dy, bounds.bottom);
         }
+//        L.d(TAG, String.format(Locale.US, "clamp: x[ %.2f -> %.2f ], y[ %.2f -> %.2f ]", dx, tdx, dy, tdy));
+        float posX = tdx + getPosX();
+        float posY = tdy + getPosY();
         if (!NumberUtils.isEqual(posX, getPosX()) ||
                 !NumberUtils.isEqual(posY, getPosY())) {
             mTranslateMatrix.setTranslate(-posX, -posY);
@@ -556,10 +529,54 @@ public class ZoomLayout extends FrameLayout {
         return false;
     }
 
-    private PointF getValidTranslationPoint() {
-        float x = getPosX();
-        float y = getPosY();
-        PointF p = new PointF(x, y);
+    int count = 0;
+    private boolean internalMove(float posX, float posY, boolean clamp) {
+//        L.d(TAG, String.format(Locale.US, "internalMove: x[ %.2f -> %.2f ], y[ %.2f -> %.2f ]", getPosX(), posX, getPosY(), posY));
+        return internalMoveBy(posX - getPosX(), posY - getPosY(), clamp);
+    }
+
+    private RectF getTranslateDeltaBounds() {
+        RectF r = new RectF();
+        float maxDeltaX = mDrawRect.width() - mViewPortRect.width();
+        if (maxDeltaX < 0) {
+            float leftEdge = Math.round((mViewPortRect.width() - mDrawRect.width()) / 2);
+            if (leftEdge > mDrawRect.left) {
+                r.left = 0;
+                r.right = leftEdge - mDrawRect.left;
+            } else {
+                r.left = leftEdge - mDrawRect.left;
+                r.right = 0;
+            }
+        } else {
+            r.left = mDrawRect.left - mViewPortRect.left;
+            r.right = r.left + maxDeltaX;
+        }
+
+        float maxDeltaY = mDrawRect.height() - mViewPortRect.height();
+        if (maxDeltaY < 0) {
+            float topEdge = Math.round((mViewPortRect.height() - mDrawRect.height()) / 2f);
+            if (topEdge > mDrawRect.top) {
+                r.top = mDrawRect.top - topEdge;
+                r.bottom = 0;
+            } else {
+                r.top = topEdge - mDrawRect.top;
+                r.bottom = 0;
+            }
+        } else {
+            r.top = mDrawRect.top - mViewPortRect.top;
+            r.bottom = r.top + maxDeltaY;
+        }
+
+        return r;
+    }
+
+    /**
+     * Gets the closest valid translation point, to the current {@link #getPosX() x} and
+     * {@link #getPosY() y} coordinates.
+     * @return the closest point
+     */
+    private PointF getClosestValidTranslationPoint() {
+        PointF p = new PointF(getPosX(), getPosY());
         if (mDrawRect.width() < mViewPortRect.width()) {
             p.x += mDrawRect.centerX() - mViewPortRect.centerX();
         } else if (mDrawRect.right < mViewPortRect.right) {
@@ -567,7 +584,6 @@ public class ZoomLayout extends FrameLayout {
         } else if (mDrawRect.left > mViewPortRect.left) {
             p.x += mDrawRect.left - mViewPortRect.left;
         }
-
         if (mDrawRect.height() < mViewPortRect.height()) {
             p.y += mDrawRect.centerY() - mViewPortRect.centerY();
         } else if (mDrawRect.bottom < mViewPortRect.bottom) {
@@ -576,17 +592,6 @@ public class ZoomLayout extends FrameLayout {
             p.y += mDrawRect.top - mViewPortRect.top;
         }
         return p;
-    }
-
-    private void ensureTranslationBounds() {
-        float x = getPosX();
-        float y = getPosY();
-        PointF p = getValidTranslationPoint();
-        if (!NumberUtils.isEqual(p.x, x) || NumberUtils.isEqual(p.y, y)) {
-//            L.d(TAG, String.format(Locale.US, "ensureTranslationBounds x[ %.0f -> %.0f ], y[ %.0f -> %.0f ] ", x, p.x, y, p.y));
-            internalMove(p.x, p.y, false);
-        }
-
     }
 
     private void internalScale(float scale, float focusX, float focusY) {
@@ -604,16 +609,19 @@ public class ZoomLayout extends FrameLayout {
         // First inverse matrixes
         mScaleMatrix.invert(mScaleMatrixInverse);
         mTranslateMatrix.invert(mTranslateMatrixInverse);
-        // Update Draw and View rects
-        // first measure the DrawRect - Then set the coordinates accordingly
+        // Update DrawRect - maybe this should be viewPort.left instead of 0?
+        ZoomUtils.setRect(mViewPortRect, 0, 0, getWidth(), getHeight());
+
         final View child = getChildAt(0);
         if (child != null) {
             ZoomUtils.setRect(mDrawRect, child.getLeft(), child.getTop(), child.getRight(), child.getBottom());
             scaledPointsToScreenPoints(mDrawRect);
         } else {
-            ZoomUtils.setRect(mDrawRect, -1f, -1f, -1f, -1f);
+            // If no child is added, then center the drawrect, and let it be empty
+            float x = mViewPortRect.centerX();
+            float y = mViewPortRect.centerY();
+            mDrawRect.set(x, y, x, y);
         }
-        ZoomUtils.setRect(mViewPortRect, 0, 0, getWidth(), getHeight());
     }
 
     /**
@@ -648,25 +656,24 @@ public class ZoomLayout extends FrameLayout {
 
         private long mStartTime;
         private float mZoomStart, mZoomEnd, mFocalX, mFocalY;
-        private float mXStart, mYStart, mXEnd, mYEnd;
+        private float mStartX, mStartY, mTargetX, mTargetY;
 
         AnimatedZoomRunnable() {
             mStartTime = System.currentTimeMillis();
         }
 
-        private boolean doScale() {
+        boolean doScale() {
             return !NumberUtils.isEqual(mZoomStart, mZoomEnd);
         }
 
-        private boolean doTranslate() {
-            return !NumberUtils.isEqual(mXStart, mXEnd) || !NumberUtils.isEqual(mYStart, mYEnd);
+        boolean doTranslate() {
+            return !NumberUtils.isEqual(mStartX, mTargetX) || !NumberUtils.isEqual(mStartY, mTargetY);
         }
 
-        public boolean validate() {
+        boolean runValidation() {
             float scale = getScale();
             float newScale = NumberUtils.clamp(mMinScale, scale, mMaxScale);
-            scale(scale, newScale, mFocusX, mFocusY);
-            translate();
+            scale(scale, newScale, mFocusX, mFocusY, true);
             if (mAnimatedZoomRunnable.doScale() || mAnimatedZoomRunnable.doTranslate()) {
                 ViewCompat.postOnAnimation(ZoomLayout.this, mAnimatedZoomRunnable);
                 return true;
@@ -674,36 +681,34 @@ public class ZoomLayout extends FrameLayout {
             return false;
         }
 
-        AnimatedZoomRunnable translate() {
-            mXStart = getPosX();
-            mYStart = getPosY();
-            if (doScale()) {
-                mScaleMatrix.setScale(mZoomEnd, mZoomEnd, mFocalX, mFocalY);
-                matrixUpdated();
-                printMatrixInfo("translate", true, false);
-            }
-            PointF p = getValidTranslationPoint();
-            mXEnd = p.x;
-            mYEnd = p.y;
-            if (doScale()) {
-                mScaleMatrix.setScale(mZoomStart, mZoomStart, ZoomLayout.this.mFocusX, ZoomLayout.this.mFocusY);
-                matrixUpdated();
-            }
-            if (doTranslate()) {
-                log(String.format(Locale.US, "AnimatedZoomRunnable.translate x[%.0f -> %.0f], y[%.0f -> %.0f]", mXStart, mXEnd, mYStart, mYEnd));
-                mPanDispatcher.onPanBegin();
-            }
-            return this;
-        }
-
-        AnimatedZoomRunnable scale(float currentZoom, float targetZoom, float focalX, float focalY) {
+        AnimatedZoomRunnable scale(float currentZoom, float targetZoom, float focalX, float focalY, boolean ensureTranslations) {
             mFocalX = focalX;
             mFocalY = focalY;
             mZoomStart = currentZoom;
             mZoomEnd = targetZoom;
             if (doScale()) {
-                log(String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
+//                log(String.format("AnimatedZoomRunnable.Scale: %s -> %s", mZoomStart, mZoomEnd));
                 mZoomDispatcher.onZoomBegin(getScale());
+            }
+            if (ensureTranslations) {
+                mStartX = getPosX();
+                mStartY = getPosY();
+                boolean scale = doScale();
+                if (scale) {
+                    mScaleMatrix.setScale(mZoomEnd, mZoomEnd, mFocalX, mFocalY);
+                    matrixUpdated();
+                }
+                PointF p = getClosestValidTranslationPoint();
+                mTargetX = p.x;
+                mTargetY = p.y;
+                if (scale) {
+                    mScaleMatrix.setScale(mZoomStart, mZoomStart, ZoomLayout.this.mFocusX, ZoomLayout.this.mFocusY);
+                    matrixUpdated();
+                }
+                if (doTranslate()) {
+//                    log(String.format(Locale.US, "AnimatedZoomRunnable.ensureTranslation x[%.0f -> %.0f], y[%.0f -> %.0f]", mStartX, mTargetX, mStartY, mTargetY));
+                    mPanDispatcher.onPanBegin();
+                }
             }
             return this;
         }
@@ -714,7 +719,6 @@ public class ZoomLayout extends FrameLayout {
         }
 
         private void finish() {
-//            ensureTranslationBounds();
             if (!mFinished) {
                 if (doScale()) {
                     mZoomDispatcher.onZoomEnd(getScale());
@@ -734,16 +738,18 @@ public class ZoomLayout extends FrameLayout {
             }
 
             float t = interpolate();
-
             if (doScale()) {
                 float newScale = mZoomStart + t * (mZoomEnd - mZoomStart);
+//                log(String.format(Locale.US, "AnimatedZoomRunnable.run.scale %.2f", newScale));
                 internalScale(newScale, mFocalX, mFocalY);
                 mZoomDispatcher.onZoom(newScale);
             }
             if (doTranslate()) {
-                float x = mXStart + t * (mXEnd - mXStart);
-                float y = mYStart + t * (mYEnd - mYStart);
+                float x = mStartX + t * (mTargetX - mStartX);
+                float y = mStartY + t * (mTargetY - mStartY);
+//                log(String.format(Locale.US, "AnimatedZoomRunnable.run.translate x:%.0f, y:%.0f", x, y));
                 internalMove(x, y, false);
+                mPanDispatcher.onPan();
             }
 
             // We haven't hit our target scale yet, so post ourselves again
