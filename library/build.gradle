@@ -1,5 +1,43 @@
 apply plugin: 'com.android.library'
 
+buildscript {
+    // Custom buildscript closure for SDK module, to allow compilation from other projects
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.1'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.4.2'
+        classpath 'io.realm:realm-gradle-plugin:1.1.1'
+    }
+}
+
+ext {
+
+    PROJ_DRYRUN=false
+
+    PROJ_REPO='maven'
+    PROJ_GROUP='com.shopgun.android'
+    PROJ_ARTIFACTID='zoomlayout'
+    PROJ_VERSION='0.1.0'
+    PROJ_NAME='zoomlayout'
+    PROJ_ORG='shopgun'
+    PROJ_WEBSITEURL='https://shopgun.com'
+    PROJ_ISSUETRACKERURL='https://github.com/shopgun/zoomlayout/issues'
+    PROJ_VCSURL='https://github.com/shopgun/zoomlayout.git'
+    PROJ_DESCRIPTION='A native zoomlayout for Android.'
+    PROJ_LABELS=['shopgun', 'android', 'sdk', 'api', 'etilbudsavis', 'zoom', 'layout', 'view', 'zoomview', 'zoomlayout']
+
+    DEVELOPER_ID='shopgun'
+    DEVELOPER_NAME='ShopGun'
+    DEVELOPER_EMAIL='danny@shopgun.com'
+
+    LICENSE_ALL=["Apache-2.0"]
+    LICENSE_NAME='The Apache Software License, Version 2.0'
+    LICENSE_URL='http://www.apache.org/licenses/LICENSE-2.0.txt'
+}
+
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.1"
@@ -19,11 +57,14 @@ android {
 }
 
 dependencies {
-//    compile project(':markhor')
-    compile 'com.shopgun.android:utils:1.0.3'
+    compile 'com.shopgun.android:utils:1.0.4'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:24.2.1'
     testCompile 'junit:junit:4.12'
 }
+
+// Apply the Bintray plugin. Do release with "gradlew bintrayUpload"
+// Setup BINTRAY_USER and BINTRAY_KEY in your global gradle.properties to upload
+apply from: 'bintray.gradle'

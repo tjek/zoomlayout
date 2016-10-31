@@ -1,0 +1,142 @@
+/*******************************************************************************
+ * Copyright 2015 ShopGun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
+group = PROJ_GROUP
+version = PROJ_VERSION
+project.archivesBaseName = PROJ_ARTIFACTID
+
+apply plugin: 'com.jfrog.bintray'
+apply plugin: "com.jfrog.artifactory"
+apply plugin: 'maven-publish'
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    failOnError true // Only disable for debugging
+    source = android.sourceSets.main.java.srcDirs
+    classpath += configurations.compile
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+javadoc {
+    options{
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version true
+        links "http://docs.oracle.com/javase/8/docs/api"
+        title PROJ_ARTIFACTID
+    }
+}
+
+if (JavaVersion.current().isJava8Compatible()) {
+    tasks.withType(Javadoc) {
+        // Disable the crazy super-strict doclint tool in Java 8
+        // Only disable for debugging
+//        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name LICENSE_NAME
+            url LICENSE_URL
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id DEVELOPER_ID
+            name DEVELOPER_NAME
+            email DEVELOPER_EMAIL
+        }
+    }
+}
+
+publishing {
+    publications {
+        MavenJava(MavenPublication) {
+            artifactId PROJ_ARTIFACTID
+            artifact javadocJar
+            artifact sourcesJar
+
+            pom{
+                packaging 'aar'
+            }
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', PROJ_DESCRIPTION)
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    publishing.publications.MavenJava.artifact(bundleRelease)
+}
+
+bintray {
+
+    user = hasProperty("bintrayUser")?getProperty("bintrayUser"):getProperty("BINTRAY_USER")
+    key = hasProperty("bintrayKey")?getProperty("bintrayKey"):getProperty("BINTRAY_KEY")
+
+    dryRun = PROJ_DRYRUN
+    publications = ['MavenJava']
+    publish = true
+
+    pkg {
+        repo = PROJ_REPO
+        name = PROJ_NAME
+        userOrg = PROJ_ORG
+        desc = PROJ_DESCRIPTION
+        websiteUrl = PROJ_WEBSITEURL
+        issueTrackerUrl = PROJ_ISSUETRACKERURL
+        vcsUrl = PROJ_VCSURL
+        licenses = LICENSE_ALL
+        publicDownloadNumbers = true
+    }
+}
+
+artifactory {
+    contextUrl = 'http://oss.jfrog.org/artifactory'
+    resolve {
+        repository {
+            repoKey = 'libs-release'
+        }
+    }
+    publish {
+        repository {
+            repoKey = 'oss-snapshot-local' //The Artifactory repository key to publish to
+            username = bintray.user
+            password = bintray.key
+            maven = true
+        }
+        defaults {
+            publications('MavenJava')
+            publishArtifacts = true
+        }
+    }
+}

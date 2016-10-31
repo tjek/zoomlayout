@@ -20,6 +20,7 @@
             android:id="@+id/textView"
             android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
             android:text="Hello, ZoomLayout!"
+            android:gravity="center"
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
