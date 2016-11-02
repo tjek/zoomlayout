@@ -105,6 +105,8 @@ public class ZoomLayout extends FrameLayout {
             public void onLayoutChange(View v, boolean changed, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 if (changed) {
                     matrixUpdated();
+                    PointF p = getClosestValidTranslationPoint();
+                    internalMove(p.x, p.y, false);
                 }
             }
         });
