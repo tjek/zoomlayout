@@ -602,6 +602,7 @@ public class ZoomLayout extends FrameLayout {
         mScaleMatrix.setScale(scale, scale, mFocusX, mFocusY);
         matrixUpdated();
         requestLayout();
+        invalidate();
     }
 
     /**
