@@ -29,6 +29,14 @@
         </Preference>
 
         <Preference
+            android:key="pref_main_scaledimageview"
+            android:title="Scaled ImageView">
+            <intent
+                android:targetPackage="com.shopgun.android.zoomlayout.sample"
+                android:targetClass="com.shopgun.android.zoomlayout.sample.ScaledImageViewActivity"/>
+        </Preference>
+
+        <Preference
             android:key="pref_main_doubleimageview"
             android:title="Double ImageView">
             <intent

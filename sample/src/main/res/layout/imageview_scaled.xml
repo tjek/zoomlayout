@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.shopgun.android.zoomlayout.ZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/zoomLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.shopgun.android.zoomlayout.sample.ScaledImageView
+        android:id="@+id/imageViewScaled"
+        android:scaleType="fitCenter"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</com.shopgun.android.zoomlayout.ZoomLayout>
