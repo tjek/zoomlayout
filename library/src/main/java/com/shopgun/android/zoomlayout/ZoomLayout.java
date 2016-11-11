@@ -21,6 +21,8 @@ import android.widget.FrameLayout;
 import com.shopgun.android.utils.NumberUtils;
 import com.shopgun.android.utils.log.L;
 
+import java.util.Locale;
+
 @SuppressWarnings("unused")
 public class ZoomLayout extends FrameLayout {
 
@@ -208,12 +210,7 @@ public class ZoomLayout extends FrameLayout {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
             if (mTapListener != null) {
-                PointF p = getRelPosition(e, getChildAt(0));
-                if (mDrawRect.contains(e.getX(), e.getY())) {
-                    return mTapListener.onContentTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
-                } else {
-                    return mTapListener.onViewTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
-                }
+                mTapListener.onTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, e));
             }
             return false;
         }
@@ -228,12 +225,7 @@ public class ZoomLayout extends FrameLayout {
             switch (e.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_UP:
                     if (mDoubleTapListener != null && NumberUtils.isEqual(getScale(), mScaleOnActionDown)) {
-                        PointF p = getRelPosition(e, getChildAt(0));
-                        if (mDrawRect.contains(e.getX(), e.getY())) {
-                            return mDoubleTapListener.onContentDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
-                        } else {
-                            return mDoubleTapListener.onViewDoubleTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
-                        }
+                        mDoubleTapListener.onDoubleTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, e));
                     }
                     break;
             }
@@ -244,21 +236,9 @@ public class ZoomLayout extends FrameLayout {
         public void onLongPress(MotionEvent e) {
             if (!mScaleDetector.isInProgress()) {
                 if (mLongTapListener != null) {
-                    PointF p = getRelPosition(e, getChildAt(0));
-                    if (mDrawRect.contains(e.getX(), e.getY())) {
-                        mLongTapListener.onContentLongTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
-                    } else {
-                        mLongTapListener.onViewLongTap(ZoomLayout.this, e.getX(), e.getY(), p.x, p.y);
-                    }
+                    mLongTapListener.onLongTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, e));
                 }
             }
-        }
-
-        private PointF getRelPosition(MotionEvent e, View v) {
-            mArray[0] = e.getX();
-            mArray[1] = e.getY();
-            screenPointsToScaledPoints(mArray);
-            return new PointF(mArray[0]-v.getLeft(), mArray[1]-v.getTop());
         }
 
         @Override
@@ -907,18 +887,15 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public interface OnTapListener {
-        boolean onContentTap(ZoomLayout view, float absX, float absY, float relX, float relY);
-        boolean onViewTap(ZoomLayout view, float absX, float absY, float relX, float relY);
+        boolean onTap(ZoomLayout view, TapInfo info);
     }
 
     public interface OnDoubleTapListener {
-        boolean onContentDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY);
-        boolean onViewDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY);
+        boolean onDoubleTap(ZoomLayout view, TapInfo info);
     }
 
     public interface OnLongTapListener {
-        void onContentLongTap(ZoomLayout view, float absX, float absY, float relX, float relY);
-        void onViewLongTap(ZoomLayout view, float absX, float absY, float relX, float relY);
+        void onLongTap(ZoomLayout view, TapInfo info);
     }
 
     @Override
@@ -934,6 +911,87 @@ public class ZoomLayout extends FrameLayout {
     @Override
     public void setOnTouchListener(OnTouchListener l) {
         throw new IllegalStateException("Cannot set OnTouchListener.");
+    }
+
+    public static class TapInfo {
+
+        private static final String STRING_FORMAT = "TapInfo[ absX:%.0f, absY:%.0f, relX:%.0f, relY:%.0f, percentX:%.2f, percentY:%.2f, contentClicked:%s ]";
+
+        float mAbsoluteX;
+        float mAbsoluteY;
+        float mRelativeX;
+        float mRelativeY;
+        float mPercentX;
+        float mPercentY;
+        boolean mContentClicked;
+
+        private TapInfo() {
+        }
+
+        private TapInfo(ZoomLayout zoomLayout, MotionEvent e) {
+            mAbsoluteX = e.getX();
+            mAbsoluteY = e.getY();
+            zoomLayout.mArray[0] = mAbsoluteX;
+            zoomLayout.mArray[1] = mAbsoluteY;
+            zoomLayout.screenPointsToScaledPoints(zoomLayout.mArray);
+            View v = zoomLayout.getChildAt(0);
+            mRelativeX = zoomLayout.mArray[0]-v.getLeft();
+            mRelativeY = zoomLayout.mArray[1]-v.getTop();
+            mPercentX = mRelativeX / (float) v.getWidth();
+            mPercentY = mRelativeY / (float) v.getHeight();
+            mContentClicked = zoomLayout.mDrawRect.contains(mAbsoluteX, mAbsoluteY);
+        }
+
+        public TapInfo(float x, float y, float relativeX, float relativeY, float percentX, float percentY, boolean contentClicked) {
+            mAbsoluteX = x;
+            mAbsoluteY = y;
+            mRelativeX = relativeX;
+            mRelativeY = relativeY;
+            mPercentX = percentX;
+            mPercentY = percentY;
+            mContentClicked = contentClicked;
+        }
+
+        public TapInfo(TapInfo info) {
+            this(info.mAbsoluteX, info.mAbsoluteY,
+                    info.mRelativeX, info.mRelativeY,
+                    info.mPercentX, info.mPercentY,
+                    info.mContentClicked);
+        }
+
+        public float getX() {
+            return mAbsoluteX;
+        }
+
+        public float getY() {
+            return mAbsoluteY;
+        }
+
+        public float getRelativeX() {
+            return mRelativeX;
+        }
+
+        public float getRelativeY() {
+            return mRelativeY;
+        }
+
+        public float getPercentX() {
+            return mPercentX;
+        }
+
+        public float getPercentY() {
+            return mPercentY;
+        }
+
+        public boolean isContentClicked() {
+            return mContentClicked;
+        }
+
+        @Override
+        public String toString() {
+            return String.format(Locale.US, STRING_FORMAT,
+                    mAbsoluteX, mAbsoluteY, mRelativeX, mRelativeY, mPercentX, mPercentY, mContentClicked);
+        }
     }
 
     private class ZoomDispatcher {

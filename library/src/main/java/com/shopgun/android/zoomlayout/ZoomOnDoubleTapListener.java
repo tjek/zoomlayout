@@ -9,22 +9,17 @@ public class ZoomOnDoubleTapListener implements ZoomLayout.OnDoubleTapListener {
     }
 
     @Override
-    public boolean onContentDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
+    public boolean onDoubleTap(ZoomLayout view, ZoomLayout.TapInfo info) {
         try {
             if (mThreeStep) {
-                threeStep(view, absX, absY);
+                threeStep(view, info.getX(), info.getY());
             } else {
-                twoStep(view, absX, absY);
+                twoStep(view, info.getX(), info.getY());
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             // Can sometimes happen when getX() and getY() is called
         }
         return true;
-    }
-
-    @Override
-    public boolean onViewDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
-        return false;
     }
 
     private void twoStep(ZoomLayout view, float x, float y) {
