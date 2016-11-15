@@ -917,6 +917,7 @@ public class ZoomLayout extends FrameLayout {
 
         private static final String STRING_FORMAT = "TapInfo[ absX:%.0f, absY:%.0f, relX:%.0f, relY:%.0f, percentX:%.2f, percentY:%.2f, contentClicked:%s ]";
 
+        View mView;
         float mAbsoluteX;
         float mAbsoluteY;
         float mRelativeX;
@@ -929,6 +930,7 @@ public class ZoomLayout extends FrameLayout {
         }
 
         private TapInfo(ZoomLayout zoomLayout, MotionEvent e) {
+            mView = zoomLayout;
             mAbsoluteX = e.getX();
             mAbsoluteY = e.getY();
             zoomLayout.mArray[0] = mAbsoluteX;
@@ -942,7 +944,8 @@ public class ZoomLayout extends FrameLayout {
             mContentClicked = zoomLayout.mDrawRect.contains(mAbsoluteX, mAbsoluteY);
         }
 
-        public TapInfo(float x, float y, float relativeX, float relativeY, float percentX, float percentY, boolean contentClicked) {
+        public TapInfo(View view, float x, float y, float relativeX, float relativeY, float percentX, float percentY, boolean contentClicked) {
+            mView = view;
             mAbsoluteX = x;
             mAbsoluteY = y;
             mRelativeX = relativeX;
@@ -953,10 +956,15 @@ public class ZoomLayout extends FrameLayout {
         }
 
         public TapInfo(TapInfo info) {
-            this(info.mAbsoluteX, info.mAbsoluteY,
+            this(info.mView,
+                    info.mAbsoluteX, info.mAbsoluteY,
                     info.mRelativeX, info.mRelativeY,
                     info.mPercentX, info.mPercentY,
                     info.mContentClicked);
+        }
+
+        public View getView() {
+            return mView;
         }
 
         public float getX() {
