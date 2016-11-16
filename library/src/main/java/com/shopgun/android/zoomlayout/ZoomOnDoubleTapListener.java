@@ -23,10 +23,10 @@ public class ZoomOnDoubleTapListener implements ZoomLayout.OnDoubleTapListener {
     }
 
     private void twoStep(ZoomLayout view, float x, float y) {
-        if (view.getScale() < view.getMaxScale()) {
-            view.setScale(view.getMaxScale(), x, y, true);
-        } else {
+        if (view.getScale() > view.getMinScale()) {
             view.setScale(view.getMinScale(), true);
+        } else {
+            view.setScale(view.getMaxScale(), x, y, true);
         }
     }
 
