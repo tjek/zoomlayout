@@ -511,7 +511,6 @@ public class ZoomLayout extends FrameLayout {
         return false;
     }
 
-    int count = 0;
     private boolean internalMove(float posX, float posY, boolean clamp) {
 //        L.d(TAG, String.format(Locale.US, "internalMove: x[ %.2f -> %.2f ], y[ %.2f -> %.2f ]", getPosX(), posX, getPosY(), posY));
         return internalMoveBy(posX - getPosX(), posY - getPosY(), clamp);
