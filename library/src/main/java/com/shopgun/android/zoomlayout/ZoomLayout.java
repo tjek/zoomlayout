@@ -21,6 +21,8 @@ import android.widget.FrameLayout;
 import com.shopgun.android.utils.NumberUtils;
 import com.shopgun.android.utils.log.L;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 @SuppressWarnings("unused")
@@ -73,9 +75,12 @@ public class ZoomLayout extends FrameLayout {
     // Listeners
     private ZoomDispatcher mZoomDispatcher = new ZoomDispatcher();
     private PanDispatcher mPanDispatcher = new PanDispatcher();
-    private OnTapListener mTapListener;
-    private OnDoubleTapListener mDoubleTapListener;
-    private OnLongTapListener mLongTapListener;
+    private List<OnZoomListener> mOnZoomListeners;
+    private List<OnPanListener> mOnPanListeners;
+    private List<OnTouchListener> mOnTouchListeners;
+    private List<OnTapListener> mOnTapListeners;
+    private List<OnDoubleTapListener> mOnDoubleTapListeners;
+    private List<OnLongTapListener> mOnLongTapListeners;
 
     public ZoomLayout(Context context) {
         super(context);
@@ -120,7 +125,12 @@ public class ZoomLayout extends FrameLayout {
         canvas.translate(-getPosX(), -getPosY());
         float scale = getScale();
         canvas.scale(scale, scale, mFocusX, mFocusY);
-        super.dispatchDraw(canvas);
+        try {
+            super.dispatchDraw(canvas);
+        } catch (NullPointerException e) {
+            L.e(TAG, "Ignore", e);
+            // ignore
+        }
         if (DEBUG) {
             ZoomUtils.debugDraw(canvas, getContext(), getPosX(), getPosY(), mFocusX, mFocusY, getMatrixValue(mScaleMatrixInverse, Matrix.MSCALE_X));
         }
@@ -176,7 +186,7 @@ public class ZoomLayout extends FrameLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return true;
+        return mAllowZoom;
     }
 
     @Override
@@ -186,7 +196,19 @@ public class ZoomLayout extends FrameLayout {
         scaledPointsToScreenPoints(mArray);
         ev.setLocation(mArray[0], mArray[1]);
 
+        if (!mAllowZoom) {
+            return false;
+        }
+
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
+        if (action == MotionEvent.ACTION_DOWN) {
+            dispatchOnTouch(MotionEvent.ACTION_DOWN, ev);
+        } else if (action == MotionEvent.ACTION_UP
+//                || action == MotionEvent.ACTION_CANCEL
+                ) {
+            dispatchOnTouch(MotionEvent.ACTION_UP, ev);
+        }
+
         boolean consumed = mScaleDetector.onTouchEvent(ev);
         consumed = mGestureDetector.onTouchEvent(ev) || consumed;
         if (action == MotionEvent.ACTION_UP) {
@@ -209,9 +231,7 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
-            if (mTapListener != null) {
-                mTapListener.onTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, e));
-            }
+            dispatchOnTab(e);
             return false;
         }
 
@@ -224,8 +244,8 @@ public class ZoomLayout extends FrameLayout {
         public boolean onDoubleTapEvent(MotionEvent e) {
             switch (e.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_UP:
-                    if (mDoubleTapListener != null && NumberUtils.isEqual(getScale(), mScaleOnActionDown)) {
-                        mDoubleTapListener.onDoubleTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, e));
+                    if (NumberUtils.isEqual(getScale(), mScaleOnActionDown)) {
+                        dispatchOnDoubleTap(e);
                     }
                     break;
             }
@@ -235,9 +255,7 @@ public class ZoomLayout extends FrameLayout {
         @Override
         public void onLongPress(MotionEvent e) {
             if (!mScaleDetector.isInProgress()) {
-                if (mLongTapListener != null) {
-                    mLongTapListener.onLongTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, e));
-                }
+                dispatchOnLongTap(e);
             }
         }
 
@@ -305,34 +323,28 @@ public class ZoomLayout extends FrameLayout {
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
-            if (mAllowZoom) {
-                mZoomDispatcher.onZoomBegin(getScale());
-                fixFocusPoint(detector.getFocusX(), detector.getFocusY());
-            }
+            mZoomDispatcher.onZoomBegin(getScale());
+            fixFocusPoint(detector.getFocusX(), detector.getFocusY());
             return true;
         }
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            if (mAllowZoom) {
-                float scale = getScale() * detector.getScaleFactor();
-                float scaleFactor = detector.getScaleFactor();
-                if (Float.isNaN(scaleFactor) || Float.isInfinite(scaleFactor))
-                    return false;
+            float scale = getScale() * detector.getScaleFactor();
+            float scaleFactor = detector.getScaleFactor();
+            if (Float.isNaN(scaleFactor) || Float.isInfinite(scaleFactor))
+                return false;
 
-                internalScale(scale, mFocusX, mFocusY);
-                mZoomDispatcher.onZoom(scale);
-            }
+            internalScale(scale, mFocusX, mFocusY);
+            mZoomDispatcher.onZoom(scale);
             return true;
         }
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
-            if (mAllowZoom) {
-                mAnimatedZoomRunnable = new AnimatedZoomRunnable();
-                mAnimatedZoomRunnable.runValidation();
-                mZoomDispatcher.onZoomEnd(getScale());
-            }
+            mAnimatedZoomRunnable = new AnimatedZoomRunnable();
+            mAnimatedZoomRunnable.runValidation();
+            mZoomDispatcher.onZoomEnd(getScale());
         }
     }
 
@@ -833,44 +845,162 @@ public class ZoomLayout extends FrameLayout {
         }
     }
 
-    public OnTapListener getOnTabListener() {
-        return mTapListener;
+    public void addOnTouchListener(OnTouchListener l) {
+        if (mOnTouchListeners == null) {
+            mOnTouchListeners = new ArrayList<>();
+        }
+        mOnTouchListeners.add(l);
     }
 
-    public void setOnTapListener(OnTapListener tabListener) {
-        mTapListener = tabListener;
+    public void removeOnTouchListeners(OnTouchListener listener) {
+        if (mOnTouchListeners != null) {
+            mOnTouchListeners.remove(listener);
+        }
     }
 
-    public OnDoubleTapListener getOnDoubleTapListener() {
-        return mDoubleTapListener;
+    public void clearOnTouchListener() {
+        if (mOnTouchListeners != null) {
+            mOnTouchListeners.clear();
+        }
     }
 
-    public void setOnDoubleTapListener(OnDoubleTapListener doubleTapListener) {
-        mDoubleTapListener = doubleTapListener;
+    private void dispatchOnTouch(int action, MotionEvent ev) {
+        if (mOnTouchListeners != null) {
+            for (int i = 0, z = mOnTouchListeners.size(); i < z; i++) {
+                OnTouchListener listener = mOnTouchListeners.get(i);
+                if (listener != null) {
+                    listener.onTouch(ZoomLayout.this, action, new TapInfo(ZoomLayout.this, ev));
+                }
+            }
+        }
     }
 
-    public OnLongTapListener getOnLongTapListener() {
-        return mLongTapListener;
+    public void addOnTapListener(OnTapListener l) {
+        if (mOnTapListeners == null) {
+            mOnTapListeners = new ArrayList<>();
+        }
+        mOnTapListeners.add(l);
     }
 
-    public void setOnLongTapListener(OnLongTapListener longTapListener) {
-        mLongTapListener = longTapListener;
+    public void removeOnTouchListener(OnTapListener listener) {
+        if (mOnTapListeners != null) {
+            mOnTapListeners.remove(listener);
+        }
     }
 
-    public OnZoomListener getOnZoomListener() {
-        return mZoomDispatcher.mZoomListener;
+    public void clearOnTabListeners() {
+        if (mOnTapListeners != null) {
+            mOnTapListeners.clear();
+        }
     }
 
-    public void setOnZoomListener(OnZoomListener zoomListener) {
-        mZoomDispatcher.mZoomListener = zoomListener;
+    private void dispatchOnTab(MotionEvent ev) {
+        if (mOnTapListeners != null) {
+            for (int i = 0, z = mOnTapListeners.size(); i < z; i++) {
+                OnTapListener listener = mOnTapListeners.get(i);
+                if (listener != null) {
+                    listener.onTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, ev));
+                }
+            }
+        }
     }
 
-    public OnPanListener getOnPanListener() {
-        return mPanDispatcher.mPanListener;
+    public void addOnDoubleTapListener(OnDoubleTapListener l) {
+        if (mOnDoubleTapListeners == null) {
+            mOnDoubleTapListeners = new ArrayList<>();
+        }
+        mOnDoubleTapListeners.add(l);
     }
 
-    public void setOnPanListener(OnPanListener panListener) {
-        mPanDispatcher.mPanListener = panListener;
+    public void removeOnDoubleTapListener(OnDoubleTapListener listener) {
+        if (mOnDoubleTapListeners != null) {
+            mOnDoubleTapListeners.remove(listener);
+        }
+    }
+
+    public void clearOnDoubleTapListeners() {
+        if (mOnDoubleTapListeners != null) {
+            mOnDoubleTapListeners.clear();
+        }
+    }
+
+    private void dispatchOnDoubleTap(MotionEvent ev) {
+        if (mOnDoubleTapListeners != null) {
+            for (int i = 0, z = mOnDoubleTapListeners.size(); i < z; i++) {
+                OnDoubleTapListener listener = mOnDoubleTapListeners.get(i);
+                if (listener != null) {
+                    listener.onDoubleTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, ev));
+                }
+            }
+        }
+    }
+
+    public void addOnLongTapListener(OnLongTapListener l) {
+        if (mOnLongTapListeners == null) {
+            mOnLongTapListeners = new ArrayList<>();
+        }
+        mOnLongTapListeners.add(l);
+    }
+
+    public void removeOnLongTapListener(OnLongTapListener listener) {
+        if (mOnLongTapListeners != null) {
+            mOnLongTapListeners.remove(listener);
+        }
+    }
+
+    public void clearOnLongTapListeners() {
+        if (mOnLongTapListeners != null) {
+            mOnLongTapListeners.clear();
+        }
+    }
+
+    private void dispatchOnLongTap(MotionEvent ev) {
+        if (mOnLongTapListeners != null) {
+            for (int i = 0, z = mOnLongTapListeners.size(); i < z; i++) {
+                OnLongTapListener listener = mOnLongTapListeners.get(i);
+                if (listener != null) {
+                    listener.onLongTap(ZoomLayout.this, new TapInfo(ZoomLayout.this, ev));
+                }
+            }
+        }
+    }
+
+    public void addOnZoomListener(OnZoomListener l) {
+        if (mOnZoomListeners == null) {
+            mOnZoomListeners = new ArrayList<>();
+        }
+        mOnZoomListeners.add(l);
+    }
+
+    public void removeOnZoomListener(OnZoomListener listener) {
+        if (mOnZoomListeners != null) {
+            mOnZoomListeners.remove(listener);
+        }
+    }
+
+    public void clearOnZoomListeners() {
+        if (mOnZoomListeners != null) {
+            mOnZoomListeners.clear();
+        }
+    }
+
+    public void addOnPanListener(OnPanListener l) {
+        if (mOnPanListeners == null) {
+            mOnPanListeners = new ArrayList<>();
+        }
+        mOnPanListeners.add(l);
+    }
+
+    public void removeOnPanListener(OnPanListener listener) {
+        if (mOnPanListeners != null) {
+            mOnPanListeners.remove(listener);
+        }
+    }
+
+    public void clearOnPanListeners() {
+        if (mOnPanListeners != null) {
+            mOnPanListeners.clear();
+        }
     }
 
     public interface OnZoomListener {
@@ -883,6 +1013,12 @@ public class ZoomLayout extends FrameLayout {
         void onPanBegin(ZoomLayout view);
         void onPan(ZoomLayout view);
         void onPanEnd(ZoomLayout view);
+    }
+
+    public interface OnTouchListener {
+        int ACTION_DOWN = MotionEvent.ACTION_DOWN;
+        int ACTION_UP = MotionEvent.ACTION_UP;
+        boolean onTouch(ZoomLayout view, int action, TapInfo info);
     }
 
     public interface OnTapListener {
@@ -908,7 +1044,7 @@ public class ZoomLayout extends FrameLayout {
     }
 
     @Override
-    public void setOnTouchListener(OnTouchListener l) {
+    public void setOnTouchListener(View.OnTouchListener l) {
         throw new IllegalStateException("Cannot set OnTouchListener.");
     }
 
@@ -1004,26 +1140,40 @@ public class ZoomLayout extends FrameLayout {
     private class ZoomDispatcher {
 
         int mCount = 0;
-        OnZoomListener mZoomListener;
 
         void onZoomBegin(float scale) {
             if (mCount++ == 0) {
-                if (mZoomListener != null) {
-                    mZoomListener.onZoomBegin(ZoomLayout.this, scale);
+                if (mOnZoomListeners != null) {
+                    for (int i = 0, z = mOnZoomListeners.size(); i < z; i++) {
+                        OnZoomListener listener = mOnZoomListeners.get(i);
+                        if (listener != null) {
+                            listener.onZoomBegin(ZoomLayout.this, scale);
+                        }
+                    }
                 }
             }
         }
 
         void onZoom(float scale) {
-            if (mZoomListener != null) {
-                mZoomListener.onZoom(ZoomLayout.this, scale);
+            if (mOnZoomListeners != null) {
+                for (int i = 0, z = mOnZoomListeners.size(); i < z; i++) {
+                    OnZoomListener listener = mOnZoomListeners.get(i);
+                    if (listener != null) {
+                        listener.onZoom(ZoomLayout.this, scale);
+                    }
+                }
             }
         }
 
         void onZoomEnd(float scale) {
             if (--mCount == 0) {
-                if (mZoomListener != null) {
-                    mZoomListener.onZoomEnd(ZoomLayout.this, scale);
+                if (mOnZoomListeners != null) {
+                    for (int i = 0, z = mOnZoomListeners.size(); i < z; i++) {
+                        OnZoomListener listener = mOnZoomListeners.get(i);
+                        if (listener != null) {
+                            listener.onZoomEnd(ZoomLayout.this, scale);
+                        }
+                    }
                 }
             }
         }
@@ -1032,26 +1182,40 @@ public class ZoomLayout extends FrameLayout {
     private class PanDispatcher {
 
         int mCount = 0;
-        OnPanListener mPanListener;
 
         void onPanBegin() {
             if (mCount++ == 0) {
-                if (mPanListener != null) {
-                    mPanListener.onPanBegin(ZoomLayout.this);
+                if (mOnPanListeners != null) {
+                    for (int i = 0, z = mOnPanListeners.size(); i < z; i++) {
+                        OnPanListener listener = mOnPanListeners.get(i);
+                        if (listener != null) {
+                            listener.onPanBegin(ZoomLayout.this);
+                        }
+                    }
                 }
             }
         }
 
         void onPan() {
-            if (mPanListener != null) {
-                mPanListener.onPan(ZoomLayout.this);
+            if (mOnPanListeners != null) {
+                for (int i = 0, z = mOnPanListeners.size(); i < z; i++) {
+                    OnPanListener listener = mOnPanListeners.get(i);
+                    if (listener != null) {
+                        listener.onPan(ZoomLayout.this);
+                    }
+                }
             }
         }
 
         void onPanEnd() {
             if (--mCount == 0) {
-                if (mPanListener != null) {
-                    mPanListener.onPanEnd(ZoomLayout.this);
+                if (mOnPanListeners != null) {
+                    for (int i = 0, z = mOnPanListeners.size(); i < z; i++) {
+                        OnPanListener listener = mOnPanListeners.get(i);
+                        if (listener != null) {
+                            listener.onPanEnd(ZoomLayout.this);
+                        }
+                    }
                 }
             }
         }
