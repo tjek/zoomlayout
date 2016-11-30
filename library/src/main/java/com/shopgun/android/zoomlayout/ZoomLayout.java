@@ -128,7 +128,6 @@ public class ZoomLayout extends FrameLayout {
         try {
             super.dispatchDraw(canvas);
         } catch (NullPointerException e) {
-            L.e(TAG, "Ignore", e);
             // ignore
         }
         if (DEBUG) {
@@ -203,9 +202,7 @@ public class ZoomLayout extends FrameLayout {
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
             dispatchOnTouch(MotionEvent.ACTION_DOWN, ev);
-        } else if (action == MotionEvent.ACTION_UP
-//                || action == MotionEvent.ACTION_CANCEL
-                ) {
+        } else if (action == MotionEvent.ACTION_UP) {
             dispatchOnTouch(MotionEvent.ACTION_UP, ev);
         }
 
@@ -463,6 +460,14 @@ public class ZoomLayout extends FrameLayout {
     public void setScale(float scale, boolean animate) {
         final View c = getChildAt(0);
         setScale(scale, getRight()/2, getBottom()/2, animate);
+    }
+
+    public boolean isTranslating() {
+        return mGestureListener.mScrolling;
+    }
+
+    public boolean isScaling() {
+        return mScaleDetector.isInProgress();
     }
 
     public boolean isScaled() {
