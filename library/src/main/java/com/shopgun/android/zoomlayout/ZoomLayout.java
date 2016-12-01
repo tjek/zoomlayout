@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Build;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -106,6 +107,10 @@ public class ZoomLayout extends FrameLayout {
     private void init(Context context, AttributeSet attrs) {
         mGestureListener = new GestureListener();
         mScaleDetector = new ScaleGestureDetector(context, mGestureListener);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+            // Quick scale doesn't play nice with the current implementation
+            mScaleDetector.setQuickScaleEnabled(false);
+        }
         mGestureDetector = new GestureDetector(context, mGestureListener);
         CompatOnGlobalLayout.listen(this, new CompatOnGlobalLayout.OnLayoutChangeListener() {
             @Override
@@ -241,9 +246,10 @@ public class ZoomLayout extends FrameLayout {
         public boolean onDoubleTapEvent(MotionEvent e) {
             switch (e.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_UP:
-                    if (NumberUtils.isEqual(getScale(), mScaleOnActionDown)) {
+                    // re-enable this when quick scale is correctly implemented
+//                    if (NumberUtils.isEqual(getScale(), mScaleOnActionDown)) {
                         dispatchOnDoubleTap(e);
-                    }
+//                    }
                     break;
             }
             return false;
