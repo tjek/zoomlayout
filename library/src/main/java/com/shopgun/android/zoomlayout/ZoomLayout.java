@@ -15,7 +15,7 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewParent;
-import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 
@@ -59,7 +59,7 @@ public class ZoomLayout extends FrameLayout {
 
     private FlingRunnable mFlingRunnable;
     private AnimatedZoomRunnable mAnimatedZoomRunnable;
-    private Interpolator mAnimationInterpolator = new AccelerateDecelerateInterpolator();
+    private Interpolator mAnimationInterpolator = new DecelerateInterpolator();
     private int mZoomDuration = DEF_ZOOM_DURATION;
 
     // allow parent views to intercept any touch events that we do not consume
@@ -423,6 +423,10 @@ public class ZoomLayout extends FrameLayout {
 
     public void setZoomDuration(int zoomDuration) {
         mZoomDuration = zoomDuration < 0 ? DEF_ZOOM_DURATION : zoomDuration;
+    }
+
+    public void setZoomInterpolator(Interpolator zoomAnimationInterpolator) {
+        mAnimationInterpolator = zoomAnimationInterpolator;
     }
 
     public float getMaxScale() {
