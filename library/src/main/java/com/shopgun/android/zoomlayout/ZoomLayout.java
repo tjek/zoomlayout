@@ -205,11 +205,7 @@ public class ZoomLayout extends FrameLayout {
         }
 
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
-        if (action == MotionEvent.ACTION_DOWN) {
-            dispatchOnTouch(MotionEvent.ACTION_DOWN, ev);
-        } else if (action == MotionEvent.ACTION_UP) {
-            dispatchOnTouch(MotionEvent.ACTION_UP, ev);
-        }
+        dispatchOnTouch(action, ev);
 
         boolean consumed = mScaleDetector.onTouchEvent(ev);
         consumed = mGestureDetector.onTouchEvent(ev) || consumed;
@@ -1031,8 +1027,6 @@ public class ZoomLayout extends FrameLayout {
     }
 
     public interface OnTouchListener {
-        int ACTION_DOWN = MotionEvent.ACTION_DOWN;
-        int ACTION_UP = MotionEvent.ACTION_UP;
         boolean onTouch(ZoomLayout view, int action, TapInfo info);
     }
 

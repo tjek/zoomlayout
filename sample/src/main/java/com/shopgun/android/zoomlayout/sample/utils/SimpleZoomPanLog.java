@@ -30,11 +30,11 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
 
     public void setLogger(ZoomLayout zoomLayout) {
         zoomLayout.DEBUG = true;
-        zoomLayout.setOnPanListener(this);
-        zoomLayout.setOnZoomListener(this);
-        zoomLayout.setOnTapListener(this);
-        zoomLayout.setOnDoubleTapListener(this);
-        zoomLayout.setOnLongTapListener(this);
+        zoomLayout.addOnPanListener(this);
+        zoomLayout.addOnZoomListener(this);
+        zoomLayout.addOnTapListener(this);
+        zoomLayout.addOnDoubleTapListener(this);
+        zoomLayout.addOnLongTapListener(this);
     }
 
     @Override
@@ -89,42 +89,18 @@ public class SimpleZoomPanLog implements ZoomLayout.OnZoomListener,
     }
 
     @Override
-    public boolean onContentTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
-        log("onContentTap", absX, absY, relX, relY);
+    public boolean onDoubleTap(ZoomLayout view, ZoomLayout.TapInfo info) {
         return false;
     }
 
     @Override
-    public boolean onViewTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
-        log("onViewTap", absX, absY, relX, relY);
+    public void onLongTap(ZoomLayout view, ZoomLayout.TapInfo info) {
+
+    }
+
+    @Override
+    public boolean onTap(ZoomLayout view, ZoomLayout.TapInfo info) {
         return false;
     }
-
-    @Override
-    public boolean onContentDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
-        log("onContentDoubleTap", absX, absY, relX, relY);
-        return false;
-    }
-
-    @Override
-    public boolean onViewDoubleTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
-        log("onViewDoubleTap", absX, absY, relX, relY);
-        return false;
-    }
-
-    @Override
-    public void onContentLongTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
-        log("onContentLongTap", absX, absY, relX, relY);
-    }
-
-    @Override
-    public void onViewLongTap(ZoomLayout view, float absX, float absY, float relX, float relY) {
-        log("onViewLongTap", absX, absY, relX, relY);
-    }
-
-    private void log(String msg, float absX, float absY, float relX, float relY) {
-        L.d(TAG, String.format(Locale.US, "%s[ absX:%.0f, absY:%.0f, relX:%.0f, relY:%.0f ]", msg, absX, absY, relX, relY));
-    }
-
 
 }
