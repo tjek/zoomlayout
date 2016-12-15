@@ -1,0 +1,73 @@
+
+ext {
+
+    // sdk and tools
+    compileSdkVersion = 24
+    buildToolsVersion = '24.0.3'
+
+    libVersions = [
+            support                     : '24.2.1',
+            playServices                : '9.8.0', // never bump this too early, as this requires an update of Google Play services on the device
+            markhor                     : '1.0.6',
+            materialcolorcreator        : '1.0.0',
+            picasso                     : '2.5.2',
+            gson                        : '2.7',
+            eventbus                    : '2.4.0',
+            androidMapsUtils            : '0.4.4',
+            butterknife                 : '7.0.1',
+            facebook                    : '4.13.1',
+            overscrollDecor             : '1.0.3',
+            junit                       : '4.12',
+            espresso                    : '2.2.2',
+            robolectric                 : '3.1',
+            mockito                     : '2.2.28',
+            okhttp                      : '3.4.1',
+            okhttpMockwebserver         : '3.4.1',
+            okhttpLoggingInterceptor    : '3.4.1',
+    ]
+
+    libDependencies = [
+
+            // internal libs
+            markhor                     : "com.shopgun.android:utils:$libVersions.markhor",
+//            markhor             : project(':markhor'),
+//            zoomlayout                  : project(':zoomlayout'),
+//            verso                       : project(':verso'),
+
+            // support libs
+            supportv4                   : "com.android.support:support-v4:$libVersions.support",
+            appcompat                   : "com.android.support:appcompat-v7:$libVersions.support",
+            cardview                    : "com.android.support:cardview-v7:$libVersions.support",
+            design                      : "com.android.support:design:$libVersions.support",
+            recyclerview                : "com.android.support:recyclerview-v7:$libVersions.support",
+
+            // Google Play services libs
+            maps                        : "com.google.android.gms:play-services-maps:$libVersions.playServices",
+            analytics                   : "com.google.android.gms:play-services-analytics:$libVersions.playServices",
+            gcm                         : "com.google.android.gms:play-services-gcm:$libVersions.playServices",
+            firebase                    : "com.google.firebase:firebase-core:$libVersions.playServices",
+
+            // other libs
+            mapsUtils                   : "com.google.maps.android:android-maps-utils:$libVersions.androidMapsUtils",
+            facebook                    : "com.facebook.android:facebook-android-sdk:$libVersions.facebook",
+            picasso                     : "com.squareup.picasso:picasso:$libVersions.picasso",
+            eventbus                    : "de.greenrobot:eventbus:$libVersions.eventbus",
+            butterknife                 : "com.jakewharton:butterknife:$libVersions.butterknife",
+            overscrollDecor             : "me.everything:overscroll-decor-android:$libVersions.overscrollDecor",
+
+            materialcolorcreator        : "com.shopgun.android:materialcolorcreator:$libVersions.materialcolorcreator",
+            eventbus                    : "de.greenrobot:eventbus:$libVersions.eventbus",
+            okhttp                      : "com.squareup.okhttp3:okhttp:$libVersions.okhttp",
+            picasso                     : "com.squareup.picasso:picasso:$libVersions.picasso",
+            gson                        : "com.google.code.gson:gson:$libVersions.gson",
+            okhttpLoggingInterceptor    : "com.squareup.okhttp3:logging-interceptor:$libVersions.okhttpLoggingInterceptor",
+
+            // tests
+            espresso                    : "com.android.support.test.espresso:espresso-core:$libVersions.espresso",
+            junit                       : "junit:junit:$libVersions.junit",
+            robolectric                 : "org.robolectric:robolectric:$libVersions.robolectric",
+            mockito                     : "org.mockito:mockito-core:$libVersions.mockito",
+            okhttpMockwebserver         : "com.squareup.okhttp3:mockwebserver:$libVersions.okhttpMockwebserver",
+    ]
+
+}

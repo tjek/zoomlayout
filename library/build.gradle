@@ -39,8 +39,10 @@ ext {
 }
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.1"
+
+    compileSdkVersion rootProject.compileSdkVersion
+    buildToolsVersion rootProject.buildToolsVersion
+
     defaultConfig {
         minSdkVersion 10
         targetSdkVersion 24
@@ -57,13 +59,13 @@ android {
 }
 
 dependencies {
-    compile 'com.shopgun.android:utils:1.0.6'
-//    compile project(':markhor')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    def libs = rootProject.libDependencies
+    compile libs.markhor
+    compile libs.appcompat
+    androidTestCompile(libs.espresso, {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:24.2.1'
-    testCompile 'junit:junit:4.12'
+    testCompile libs.junit
 }
 
 // Apply the Bintray plugin. Do release with "gradlew bintrayUpload"
