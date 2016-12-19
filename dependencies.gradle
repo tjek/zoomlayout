@@ -8,8 +8,6 @@ ext {
     libVersions = [
             support                     : '24.2.1',
             playServices                : '9.8.0', // never bump this too early, as this requires an update of Google Play services on the device
-            markhor                     : '1.0.6',
-            materialcolorcreator        : '1.0.0',
             picasso                     : '2.5.2',
             gson                        : '2.7',
             eventbus                    : '2.4.0',
@@ -22,17 +20,35 @@ ext {
             robolectric                 : '3.1',
             mockito                     : '2.2.28',
             okhttp                      : '3.4.1',
-            okhttpMockwebserver         : '3.4.1',
-            okhttpLoggingInterceptor    : '3.4.1',
+            stetho                      : '1.4.2',
+            circularReveal              : '1.1.1',
+            recyclerviewMultipleViewtypesAdapter : '1.1.0',
+            placesautocomplete          : '0.2-SNAPSHOT',
+            crashlytics                 : '2.5.5@aar',
+
+            sgn : [
+                    materialcolorcreator        : '1.0.0',
+                    markhor                     : '1.0.6',
+                    zoomlayout                  : '1.0.0',
+                    verso                       : '1.0.0',
+                    sdk                         : '4.0.0',
+            ]
+
     ]
 
     libDependencies = [
 
             // internal libs
-            markhor                     : "com.shopgun.android:utils:$libVersions.markhor",
-//            markhor             : project(':markhor'),
+            markhor                     : "com.shopgun.android:utils:$libVersions.sgn.markhor",
+//            markhor                     : project(':markhor'),
+//            zoomlayout                  : "com.shopgun.android:zoomlayout:$libVersions.sgn.zoomlayout",
 //            zoomlayout                  : project(':zoomlayout'),
+//            verso                       : "com.shopgun.android:verso:$libVersions.sgn.verso",
 //            verso                       : project(':verso'),
+//            shopGunSdk                  : "com.shopgun.android:sdk:$libVersions.sgn.sdk",
+//            shopGunSdk                  : project(':shopGunSdk'),
+//            materialcolorcreator        : "com.shopgun.android:materialcolorcreator:$libVersions.sgn.materialcolorcreator",
+//            dragSortListView            : project(':dragSortListView'),
 
             // support libs
             supportv4                   : "com.android.support:support-v4:$libVersions.support",
@@ -40,6 +56,7 @@ ext {
             cardview                    : "com.android.support:cardview-v7:$libVersions.support",
             design                      : "com.android.support:design:$libVersions.support",
             recyclerview                : "com.android.support:recyclerview-v7:$libVersions.support",
+            preference                  : "com.android.support:preference-v14:$libVersions.support",
 
             // Google Play services libs
             maps                        : "com.google.android.gms:play-services-maps:$libVersions.playServices",
@@ -55,19 +72,25 @@ ext {
             butterknife                 : "com.jakewharton:butterknife:$libVersions.butterknife",
             overscrollDecor             : "me.everything:overscroll-decor-android:$libVersions.overscrollDecor",
 
-            materialcolorcreator        : "com.shopgun.android:materialcolorcreator:$libVersions.materialcolorcreator",
             eventbus                    : "de.greenrobot:eventbus:$libVersions.eventbus",
             okhttp                      : "com.squareup.okhttp3:okhttp:$libVersions.okhttp",
+            okhttpLoggingInterceptor    : "com.squareup.okhttp3:logging-interceptor:$libVersions.okhttp",
+            okhttpMockwebserver         : "com.squareup.okhttp3:mockwebserver:$libVersions.okhttp",
             picasso                     : "com.squareup.picasso:picasso:$libVersions.picasso",
             gson                        : "com.google.code.gson:gson:$libVersions.gson",
-            okhttpLoggingInterceptor    : "com.squareup.okhttp3:logging-interceptor:$libVersions.okhttpLoggingInterceptor",
+            stetho                      : "com.facebook.stetho:stetho:$libVersions.stetho",
+            stethoUrlconnection         : "com.facebook.stetho:stetho-urlconnection:$libVersions.stetho",
+            circularReveal              : "com.github.ozodrukh:CircularReveal:$libVersions.circularReveal",
+            recyclerviewMultipleViewtypesAdapter : "com.yqritc:recyclerview-multiple-viewtypes-adapter:$libVersions.recyclerviewMultipleViewtypesAdapter",
+            placesautocomplete          : "com.seatgeek:placesautocomplete:$libVersions.placesautocomplete",
+            crashlytics                 : "com.crashlytics.sdk.android:crashlytics:$libVersions.crashlytics",
+
 
             // tests
             espresso                    : "com.android.support.test.espresso:espresso-core:$libVersions.espresso",
             junit                       : "junit:junit:$libVersions.junit",
             robolectric                 : "org.robolectric:robolectric:$libVersions.robolectric",
             mockito                     : "org.mockito:mockito-core:$libVersions.mockito",
-            okhttpMockwebserver         : "com.squareup.okhttp3:mockwebserver:$libVersions.okhttpMockwebserver",
     ]
 
 }
