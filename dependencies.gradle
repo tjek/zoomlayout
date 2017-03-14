@@ -3,7 +3,7 @@ ext {
 
     // sdk and tools
     compileSdkVersion = 24
-    buildToolsVersion = '24.0.3'
+    buildToolsVersion = '25.0.2'
 
     libVersions = [
             support                     : '24.2.1',
