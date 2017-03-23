@@ -28,7 +28,7 @@ ext {
 
             sgn : [
                     materialcolorcreator        : '1.0.0',
-                    markhor                     : '1.0.6',
+                    markhor                     : '1.0.8',
                     zoomlayout                  : '1.0.0',
                     verso                       : '1.0.0',
                     sdk                         : '4.0.0',
