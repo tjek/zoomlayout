@@ -36,6 +36,16 @@ public class ViewPagerActivity extends AppCompatActivity {
         mViewPager.setAdapter(new ZoomLayoutAdapter(getSupportFragmentManager()));
     }
 
+    private static int[][] s_images = new int[][] {
+        new int[] { R.drawable.irongate },
+        new int[] { R.drawable.irongate,  R.drawable.mill },
+        new int[] { R.drawable.boat },
+        new int[] { R.drawable.mill, R.drawable.irongate },
+        new int[] { R.drawable.irongate,  R.drawable.boat },
+        new int[] { R.drawable.mill,  R.drawable.boat },
+        new int[] { R.drawable.mill }
+    };
+
     public static class ZoomLayoutAdapter extends FragmentStatePagerAdapter {
 
         public ZoomLayoutAdapter(FragmentManager fm) {
@@ -44,21 +54,13 @@ public class ViewPagerActivity extends AppCompatActivity {
 
         @Override
         public Fragment getItem(int position) {
-            switch (position) {
-                case 0:
-                    return ZoomLayoutFragment.newInstance(new int[] { R.drawable.irongate });
-                case 1:
-                    return ZoomLayoutFragment.newInstance(new int[] { R.drawable.irongate,  R.drawable.mill });
-                case 2:
-                    return ZoomLayoutFragment.newInstance(new int[] { R.drawable.boat });
-                default:
-                    throw new IllegalStateException("wat");
-            }
+            int[] img = s_images[position%s_images.length];
+            return ZoomLayoutFragment.newInstance(img);
         }
 
         @Override
         public int getCount() {
-            return 3;
+            return 14;
         }
 
     }
