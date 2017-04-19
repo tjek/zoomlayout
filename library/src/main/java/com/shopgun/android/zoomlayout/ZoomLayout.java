@@ -15,12 +15,14 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewParent;
+import android.view.ViewTreeObserver;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 
 import com.shopgun.android.utils.NumberUtils;
 import com.shopgun.android.utils.log.L;
+import com.shopgun.android.utils.log.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,7 @@ public class ZoomLayout extends FrameLayout {
     private ScaleGestureDetector mScaleDetector;
     private GestureDetector mGestureDetector;
     private GestureListener mGestureListener;
+    private SimpleOnGlobalLayoutChangedListener mSimpleOnGlobalLayoutChangedListener;
 
     private Matrix mScaleMatrix = new Matrix();
     private Matrix mScaleMatrixInverse = new Matrix();
@@ -112,16 +115,23 @@ public class ZoomLayout extends FrameLayout {
             mScaleDetector.setQuickScaleEnabled(false);
         }
         mGestureDetector = new GestureDetector(context, mGestureListener);
-        CompatOnGlobalLayout.listen(this, new CompatOnGlobalLayout.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, boolean changed, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                if (changed) {
-                    matrixUpdated();
-                    PointF p = getClosestValidTranslationPoint();
-                    internalMove(p.x, p.y, false);
-                }
-            }
-        });
+        mSimpleOnGlobalLayoutChangedListener = new SimpleOnGlobalLayoutChangedListener();
+        getViewTreeObserver().addOnGlobalLayoutListener(mSimpleOnGlobalLayoutChangedListener);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        ZoomLayout.removeGlobal(this, mSimpleOnGlobalLayoutChangedListener);
+        super.onDetachedFromWindow();
+    }
+
+    public static void removeGlobal(View v, ViewTreeObserver.OnGlobalLayoutListener listener) {
+        ViewTreeObserver obs = v.getViewTreeObserver();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            obs.removeOnGlobalLayoutListener(listener);
+        } else {
+            obs.removeGlobalOnLayoutListener(listener);
+        }
     }
 
     @Override
@@ -1228,6 +1238,30 @@ public class ZoomLayout extends FrameLayout {
                 }
             }
         }
+    }
+
+    private class SimpleOnGlobalLayoutChangedListener implements ViewTreeObserver.OnGlobalLayoutListener {
+
+        private int mLeft, mTop, mRight, mBottom;
+
+        @Override
+        public void onGlobalLayout() {
+            int oldL = mLeft;
+            int oldT = mTop;
+            int oldR = mRight;
+            int oldB = mBottom;
+            mLeft = getLeft();
+            mTop = getTop();
+            mRight = getRight();
+            mBottom = getBottom();
+            boolean changed = oldL != mLeft || oldT != mTop || oldR != mRight || oldB != mBottom;
+            if (changed) {
+                matrixUpdated();
+                PointF p = getClosestValidTranslationPoint();
+                internalMove(p.x, p.y, false);
+            }
+        }
+
     }
 
     private void log(String msg) {
