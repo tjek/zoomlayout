@@ -129,8 +129,8 @@ afterEvaluate {
 
 bintray {
 
-    user = hasProperty("bintrayUser")?getProperty("bintrayUser"):getProperty("BINTRAY_USER")
-    key = hasProperty("bintrayKey")?getProperty("bintrayKey"):getProperty("BINTRAY_KEY")
+    user = hasProperty("BINTRAY_USER") ? getProperty("BINTRAY_USER"): ''
+    key = hasProperty("BINTRAY_KEY") ? getProperty("BINTRAY_KEY"): ''
 
     dryRun = PROJ_DRYRUN
     publications = ['MavenJava']
