@@ -142,8 +142,10 @@ public class ZoomLayout extends FrameLayout {
         canvas.scale(scale, scale, mFocusX, mFocusY);
         try {
             super.dispatchDraw(canvas);
-        } catch (NullPointerException e) {
-            // ignore
+        } catch (Exception e) {
+            // Few issues here, ignore for now.
+            // NullPointerException
+            // StackOverflowError when drawing childViews
         }
         if (DEBUG) {
             ZoomUtils.debugDraw(canvas, getContext(), getPosX(), getPosY(), mFocusX, mFocusY, getMatrixValue(mScaleMatrixInverse, Matrix.MSCALE_X));
