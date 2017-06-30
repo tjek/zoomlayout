@@ -6,15 +6,16 @@ ext {
     buildToolsVersion = '25.0.2'
 
     libVersions = [
-            support                     : '24.2.1',
+            support                     : '25.0.1',
             playServices                : '9.8.0', // never bump this too early, as this requires an update of Google Play services on the device
             picasso                     : '2.5.2',
             gson                        : '2.7',
             eventbus                    : '2.4.0',
             androidMapsUtils            : '0.4.4',
             butterknife                 : '7.0.1',
-            facebook                    : '4.13.1',
+            facebook                    : '4.22.1',
             overscrollDecor             : '1.0.3',
+            photoView                   : '2.0.0',
             junit                       : '4.12',
             espresso                    : '2.2.2',
             robolectric                 : '3.1',
@@ -25,6 +26,8 @@ ext {
             recyclerviewMultipleViewtypesAdapter : '1.1.0',
             placesautocomplete          : '0.2-SNAPSHOT',
             crashlytics                 : '2.5.5@aar',
+            adjust                      : '4.11.0',
+            advrecyclerview             : '0.10.5@aar',
 
             sgn : [
                     materialcolorcreator        : '1.0.0',
@@ -63,6 +66,7 @@ ext {
             analytics                   : "com.google.android.gms:play-services-analytics:$libVersions.playServices",
             gcm                         : "com.google.android.gms:play-services-gcm:$libVersions.playServices",
             firebase                    : "com.google.firebase:firebase-core:$libVersions.playServices",
+            ads                         : "com.google.android.gms:play-services-ads:$libVersions.playServices",
 
             // other libs
             mapsUtils                   : "com.google.maps.android:android-maps-utils:$libVersions.androidMapsUtils",
@@ -71,6 +75,7 @@ ext {
             eventbus                    : "de.greenrobot:eventbus:$libVersions.eventbus",
             butterknife                 : "com.jakewharton:butterknife:$libVersions.butterknife",
             overscrollDecor             : "me.everything:overscroll-decor-android:$libVersions.overscrollDecor",
+            photoView                   : "com.github.chrisbanes:PhotoView:$libVersions.photoView",
 
             eventbus                    : "de.greenrobot:eventbus:$libVersions.eventbus",
             okhttp                      : "com.squareup.okhttp3:okhttp:$libVersions.okhttp",
@@ -84,7 +89,8 @@ ext {
             recyclerviewMultipleViewtypesAdapter : "com.yqritc:recyclerview-multiple-viewtypes-adapter:$libVersions.recyclerviewMultipleViewtypesAdapter",
             placesautocomplete          : "com.seatgeek:placesautocomplete:$libVersions.placesautocomplete",
             crashlytics                 : "com.crashlytics.sdk.android:crashlytics:$libVersions.crashlytics",
-
+            adjust                      : "com.adjust.sdk:adjust-android:$libVersions.adjust",
+            advrecyclerview             : "com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:$libVersions.advrecyclerview",
 
             // tests
             espresso                    : "com.android.support.test.espresso:espresso-core:$libVersions.espresso",
