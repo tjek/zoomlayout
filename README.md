@@ -2,24 +2,9 @@
 
 ZoomLayout is a ViewGroup, that enables pinch-zoom and panning on child-views.
 
-## Dependency
+## Download
 
-Add this in your root `build.gradle` file (**not** your module `build.gradle` file):
-
-```gradle
-allprojects {
-	repositories {
-        maven { url "https://jitpack.io" }
-    }
-}
-```
-
-Then, add the library to your module `build.gradle`
-```gradle
-dependencies {
-    compile 'com.shopgun.android:zoomlayout:0.8.0'
-}
-```
+Unfortunately there is an issue with uploading to out Maven repo, so you'll have to clone and incude this project.
 
 ## Features
 - Zoom and pan on any view, using multi-touch.
