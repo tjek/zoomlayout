@@ -20,12 +20,12 @@
 
 ext {
 
-    PROJ_DRYRUN=false
+    PROJ_DRYRUN=true
 
     PROJ_REPO='maven'
     PROJ_GROUP='com.shopgun.android'
     PROJ_ARTIFACTID='zoomlayout'
-    PROJ_VERSION='0.1.0'
+    PROJ_VERSION='0.8.0'
     PROJ_NAME='zoomlayout'
     PROJ_ORG='shopgun'
     PROJ_WEBSITEURL='https://shopgun.com'
@@ -129,8 +129,8 @@ afterEvaluate {
 
 bintray {
 
-    user = hasProperty("BINTRAY_USER") ? getProperty("BINTRAY_USER"): ''
-    key = hasProperty("BINTRAY_KEY") ? getProperty("BINTRAY_KEY"): ''
+    user = hasProperty("bintrayUser")?getProperty("bintrayUser"):getProperty("BINTRAY_USER")
+    key = hasProperty("bintrayKey")?getProperty("bintrayKey"):getProperty("BINTRAY_KEY")
 
     dryRun = PROJ_DRYRUN
     publications = ['MavenJava']
