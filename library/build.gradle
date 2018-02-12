@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
     // Custom buildscript closure for SDK module, to allow compilation from other projects
@@ -8,7 +9,10 @@ buildscript {
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
-        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.4.9'
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.4.9' // upgrade to 4.4.10+ doesn't build the sdk
+
+        // Dependencies checker: run from command line ./gradlew dependencyUpdates -Drevision=release|milestone|integration
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.17.0'
     }
 }
 
@@ -39,8 +43,8 @@ android {
 
 dependencies {
     def libs = rootProject.libDependencies
-    api libs.markhor
-    api libs.appcompat
+    implementation libs.markhor
+    implementation libs.appcompat
     androidTestImplementation(libs.espresso, {
         exclude group: 'com.android.support', module: 'support-annotations'
     })

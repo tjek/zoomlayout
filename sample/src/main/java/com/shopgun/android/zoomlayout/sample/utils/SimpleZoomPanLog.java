@@ -3,7 +3,6 @@ package com.shopgun.android.zoomlayout.sample.utils;
 import android.graphics.RectF;
 import android.widget.TextView;
 
-import com.shopgun.android.utils.log.L;
 import com.shopgun.android.zoomlayout.ZoomLayout;
 
 import java.util.Locale;

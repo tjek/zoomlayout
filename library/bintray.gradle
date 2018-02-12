@@ -36,7 +36,7 @@ ext {
 
     DEVELOPER_ID='shopgun'
     DEVELOPER_NAME='ShopGun'
-    DEVELOPER_EMAIL='dh@shopgun.com'
+    DEVELOPER_EMAIL='agb@shopgun.com'
 
     LICENSE_ALL=["Apache-2.0"]
     LICENSE_NAME='The Apache Software License, Version 2.0'
@@ -118,6 +118,15 @@ publishing {
                 def root = asNode()
                 root.appendNode('description', PROJ_DESCRIPTION)
                 root.children().last() + pomConfig
+                def dependenciesNode = root.appendNode('dependencies')
+                configurations.implementation.allDependencies.each {
+                    if (it.name != 'unspecified') {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
             }
         }
     }
@@ -129,8 +138,11 @@ afterEvaluate {
 
 bintray {
 
-    user = hasProperty("bintrayUser")?getProperty("bintrayUser"):getProperty("BINTRAY_USER")
-    key = hasProperty("bintrayKey")?getProperty("bintrayKey"):getProperty("BINTRAY_KEY")
+    user = project.hasProperty("BINTRAY_USER") ? project.getProperty("BINTRAY_USER"): ''
+    key = project.hasProperty("BINTRAY_KEY") ? project.getProperty("BINTRAY_KEY"): ''
+
+    project.logger.lifecycle('user:' + user)
+    project.logger.lifecycle('key:' + key)
 
     dryRun = PROJ_DRYRUN
     publications = ['MavenJava']
