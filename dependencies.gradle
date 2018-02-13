@@ -19,8 +19,8 @@ ext {
     libDependencies = [
 
             // internal libs
-//            markhor                     : "com.shopgun.android:utils:$libVersions.sgn.markhor",
-            markhor                     : project(':markhor'),
+            markhor                     : "com.shopgun.android:utils:1.0.9",
+//            markhor                     : project(':markhor'),
 
             // support libs
             supportv4                   : "com.android.support:support-v4:$libVersions.support",
