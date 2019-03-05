@@ -2,36 +2,36 @@
 ext {
 
     // sdk and tools
-    compileSdkVersion = 27
+    compileSdkVersion = 28
 
     libVersions = [
-            support                     : '27.0.2',
+            support                     : '1.0.0',
             picasso                     : '2.5.2',
             junit                       : '4.12',
-            espresso                    : '2.2.2',
+            espresso                    : '3.1.0',
             robolectric                 : '3.7',
             mockito                     : '2.15.0',
-            okhttp                      : '3.4.1'
+            okhttp                      : '3.11.0'
 
     ]
 
     libDependencies = [
 
             // internal libs
-            markhor                     : "com.shopgun.android:utils:1.0.9",
-//            markhor                     : project(':markhor'),
+//            markhor                     : "com.shopgun.android:utils:1.1.0",
+            markhor                     : project(':markhor'),
 
             // support libs
-            supportv4                   : "com.android.support:support-v4:$libVersions.support",
-            appcompat                   : "com.android.support:appcompat-v7:$libVersions.support",
-            recyclerview                : "com.android.support:recyclerview-v7:$libVersions.support",
+            supportv4                   : "androidx.legacy:legacy-support-v4:$libVersions.support",
+            appcompat                   : "androidx.appcompat:appcompat:$libVersions.support",
+            recyclerview                : "androidx.recyclerview:recyclerview:$libVersions.support",
 
             // other libs
             picasso                     : "com.squareup.picasso:picasso:$libVersions.picasso",
             okhttp                      : "com.squareup.okhttp3:okhttp:$libVersions.okhttp",
 
             // tests
-            espresso                    : "com.android.support.test.espresso:espresso-core:$libVersions.espresso",
+            espresso                    : "androidx.test.espresso:espresso-core:$libVersions.espresso",
             junit                       : "junit:junit:$libVersions.junit",
             robolectric                 : "org.robolectric:robolectric:$libVersions.robolectric",
             mockito                     : "org.mockito:mockito-core:$libVersions.mockito"

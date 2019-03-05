@@ -32,7 +32,7 @@
                 android:ems="10"
                 android:id="@+id/editText"/>
 
-            <android.support.v7.widget.SwitchCompat
+            <androidx.appcompat.widget.SwitchCompat
                 android:text="No switches"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
