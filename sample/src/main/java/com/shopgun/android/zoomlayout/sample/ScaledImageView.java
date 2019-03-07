@@ -2,9 +2,10 @@ package com.shopgun.android.zoomlayout.sample;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
-public class ScaledImageView extends ImageView {
+import androidx.appcompat.widget.AppCompatImageView;
+
+public class ScaledImageView extends AppCompatImageView {
     
     public static final String TAG = ScaledImageView.class.getSimpleName();
 

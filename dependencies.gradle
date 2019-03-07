@@ -11,15 +11,15 @@ ext {
             espresso                    : '3.1.0',
             robolectric                 : '3.7',
             mockito                     : '2.15.0',
-            okhttp                      : '3.11.0'
+            okhttp                      : '3.12.1' // 3.13 doesn't support pre Android 5. https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
 
     ]
 
     libDependencies = [
 
             // internal libs
-//            markhor                     : "com.shopgun.android:utils:1.1.0",
-            markhor                     : project(':markhor'),
+            markhor                     : "com.shopgun.android:utils:2.0.0",
+//            markhor                     : project(':markhor'),
 
             // support libs
             supportv4                   : "androidx.legacy:legacy-support-v4:$libVersions.support",

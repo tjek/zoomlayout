@@ -1,3 +1,4 @@
 include ':library', ':sample'
 include ':markhor'
 project(':markhor').projectDir=new File('../markhor/library')
+enableFeaturePreview('STABLE_PUBLISHING')
