@@ -29,7 +29,8 @@ android {
 dependencies {
     implementation project(':library')
     def libs = rootProject.libDependencies
-    implementation libs.okhttp
-    implementation libs.picasso
     implementation libs.appcompat
+
+    implementation "com.squareup.okhttp3:okhttp:3.12.1" // 3.13 doesn't support pre Android 5. https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
+    implementation "com.squareup.picasso:picasso:2.5.2"
 }
