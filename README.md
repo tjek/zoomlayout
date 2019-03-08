@@ -4,7 +4,9 @@ ZoomLayout is a ViewGroup, that enables pinch-zoom and panning on child-views.
 
 ## Download
 
-Unfortunately there is an issue with uploading to out Maven repo, so you'll have to clone and incude this project.
+```
+implementation com.shopgun.android:zoomlayout:0.8.1" // 2.0.0 for AndroidX
+```
 
 ## Features
 - Zoom and pan on any view, using multi-touch.
