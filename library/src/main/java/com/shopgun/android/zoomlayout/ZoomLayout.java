@@ -8,7 +8,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
-import android.support.v4.view.ViewCompat;
+import androidx.core.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -22,7 +22,6 @@ import android.widget.FrameLayout;
 
 import com.shopgun.android.utils.NumberUtils;
 import com.shopgun.android.utils.log.L;
-import com.shopgun.android.utils.log.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
