@@ -50,4 +50,4 @@ dependencies {
     testImplementation libs.junit
 }
 
-apply from: 'bintray.gradle'
+//apply from: 'bintray.gradle'
