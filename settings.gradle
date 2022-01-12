@@ -1,4 +1,7 @@
-include ':library', ':sample'
-include ':markhor'
-project(':markhor').projectDir=new File('../markhor/library')
-enableFeaturePreview('STABLE_PUBLISHING')
+include ':library'
+if (!System.env.JITPACK) {
+    include ':sample'
+    include ':markhor'
+    project(':markhor').projectDir=new File('../markhor/library')
+}
+

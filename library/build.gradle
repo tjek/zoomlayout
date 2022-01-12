@@ -1,19 +1,22 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
 apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
     // Custom buildscript closure for SDK module, to allow compilation from other projects
     repositories {
-        jcenter()
+        gradlePluginPortal()
     }
     dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
-        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.9.3'
-
         // Dependencies checker: run from command line ./gradlew dependencyUpdates -Drevision=release|milestone|integration
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.20.0'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.25.0'
     }
+}
+
+repositories {
+    mavenCentral()
+    google()
+    maven { url "https://jitpack.io" }
 }
 
 android {
@@ -50,4 +53,16 @@ dependencies {
     testImplementation libs.junit
 }
 
-//apply from: 'bintray.gradle'
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                from components.release
+                groupId = 'com.github.shopgun'
+                artifactId = 'zoomlayout'
+                version = '3.0.0'
+            }
+        }
+    }
+}
